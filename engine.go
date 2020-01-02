@@ -271,15 +271,21 @@ func (engine *CFPEngine) UpdatePosition(position, moves string) error {
 }
 
 // Go sends a go command to the engine. This signifies it should start thinking.
-func (engine *CFPEngine) Go() error {
+// moveTime is the amount of time in miliseconds that the engine has to think.
+// If moveTime is -1, the engine should keep thinking until a stop command is sent.
+func (engine *CFPEngine) Go(moveTime int) error {
 	if !engine.ready {
 		return errors.New("engine is not loaded")
 	}
 	if engine.searching {
 		return errors.New("engine is already searching")
 	}
+	message := "go"
+	if moveTime > -1 {
+		message += fmt.Sprintf("movetime %d", moveTime)
+	}
 	engine.searching = true
-	if _, err := engine.stdin.Write([]byte("go\n")); err != nil {
+	if _, err := engine.stdin.Write([]byte(message + "\n")); err != nil {
 		return errors.Wrap(err, "unable to send command")
 	}
 	return nil
