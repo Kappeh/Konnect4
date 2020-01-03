@@ -1,0 +1,237 @@
+html {
+    font-size: 20px;
+    font-family: Arial, Helvetica, sans-serif;
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    height: 5%;
+    background-color: lightblue;
+    width: 100%;
+    color: white;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+#logo {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+}
+
+h1 {
+    font-weight: bold;
+    padding: 0 2em;
+}
+
+nav ul {
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: right;
+}
+
+nav ul li {
+    padding: 0 2em;
+    cursor: pointer;
+}
+
+nav ul li:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    height: 95%;
+}
+
+.horizontal-content {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    height: 70%;
+}
+
+#engine-list {
+    width: 20%;
+    background-color: red;
+    overflow-x: hidden;
+}
+
+.engine {
+    width: 100%;
+    height: 5em;
+    background-color: orangered;
+    display: flex;
+    flex-direction: row;
+}
+
+#engine-info {
+    height: 100%;
+    display: flex;
+    width: 70%;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.center {
+    display: inline-block;
+    margin: 0 auto;
+}
+
+.engine-info p {
+    display: inline-block;
+}
+
+.engine-name {
+    color: white;
+}
+
+.engine-author {
+    color: lightgray;
+    font-size: 0.8em;
+    font-weight: lighter;
+    font-style: italic;
+}
+
+.engine-player1, .engine-player2, .engine-disconnect {
+    height: 100%;
+    width: 10%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    cursor: pointer;
+}
+
+h3 {
+    color: white;
+    font-weight: bold;
+}
+
+.engine-player1 {
+    background-color: yellow;
+}
+
+.engine-player2 {
+    background-color: blue;
+}
+
+.engine-disconnect {
+    background-color: red;
+}
+
+#load-engine-button {
+    width: 100%;
+    height: 2em;
+    line-height: 2em;
+    vertical-align: middle;
+    text-align: center;
+    background-color: lightgreen;
+    cursor: pointer;
+}
+
+#load-engine-button p {
+    color: white;
+    font-weight: bold;
+}
+
+#game-screen {
+    background-color: orange;
+    width: 80%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+#game-screen-canvas {
+    width: 800px;
+    height: 500px;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+footer {
+    background-color: gray;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    height: 30%;
+}
+
+#game-controls {
+    height: 20%;
+    background-color: #222222;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.general-controls, .game-controls {
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+}
+
+.button a {
+    padding: 0 2em;
+    display: inline-block;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.button a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.button a {
+    color: white;
+    text-decoration: none;
+}
+
+#output-terminals {
+    height: 80%;
+    background-color: #aaaaaa;
+    display: flex;
+    flex-direction: row;
+}
+
+.terminal {
+    width: 50%;
+    padding: 1em;
+    display: flex;
+    flex-direction: column;
+}
+
+.terminal h6 {
+    height: 10%;
+}
+
+.terminal .rule {
+    height: 10%;
+}
+
+.terminal p {
+    font-family: Courier New;
+    color: #EEEEEE;
+    font-size: 0.7em;
+    height: 80%;
+}
+
+.scroll {
+    overflow-y: scroll;
+}
