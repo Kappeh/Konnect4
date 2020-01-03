@@ -12,12 +12,19 @@ body {
 
 header {
     height: 5%;
-    background-color: lightblue;
+    background-color: #0a0c12;
     width: 100%;
-    color: white;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+}
+
+header h1 {
+    color: #f6f5f4;
+}
+
+header a {
+    color: #80cbc4;
 }
 
 #logo {
@@ -39,19 +46,11 @@ nav ul {
     justify-content: right;
 }
 
-nav ul li {
-    padding: 0 2em;
-    cursor: pointer;
-}
-
-nav ul li:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-}
-
 main {
     display: flex;
     flex-direction: column;
     height: 95%;
+    background-color: #0f111a;
 }
 
 .horizontal-content {
@@ -65,29 +64,29 @@ main {
 
 #engine-list {
     width: 20%;
-    background-color: red;
     overflow-x: hidden;
 }
 
 .engine {
     width: 100%;
     height: 5em;
-    background-color: orangered;
     display: flex;
     flex-direction: row;
 }
 
-#engine-info {
+.engine-info {
     height: 100%;
     display: flex;
-    width: 70%;
+    width: 61%;
     flex-direction: column;
     justify-content: center;
 }
 
 .center {
-    display: inline-block;
-    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-left: 1em;
 }
 
 .engine-info p {
@@ -105,9 +104,11 @@ main {
     font-style: italic;
 }
 
-.engine-player1, .engine-player2, .engine-disconnect {
+.engine-player1,
+.engine-player2,
+.engine-disconnect {
     height: 100%;
-    width: 10%;
+    width: 13%;
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -115,21 +116,17 @@ main {
     cursor: pointer;
 }
 
+.engine-player1:hover,
+.engine-player2:hover,
+.engine-disconnect:hover,
+.engine-player1.active,
+.engine-player2.active {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
 h3 {
     color: white;
     font-weight: bold;
-}
-
-.engine-player1 {
-    background-color: yellow;
-}
-
-.engine-player2 {
-    background-color: blue;
-}
-
-.engine-disconnect {
-    background-color: red;
 }
 
 #load-engine-button {
@@ -138,17 +135,16 @@ h3 {
     line-height: 2em;
     vertical-align: middle;
     text-align: center;
-    background-color: lightgreen;
+    background-color: #0a0c12;
     cursor: pointer;
 }
 
 #load-engine-button p {
-    color: white;
+    color: #80cbc4;
     font-weight: bold;
 }
 
 #game-screen {
-    background-color: orange;
     width: 80%;
     display: flex;
     flex-direction: row;
@@ -172,7 +168,7 @@ footer {
 
 #game-controls {
     height: 20%;
-    background-color: #222222;
+    background-color: #0a0c12;
     width: 100%;
     display: flex;
     flex-direction: row;
@@ -185,6 +181,10 @@ footer {
     flex-direction: row;
 }
 
+#game-controls .button a {
+    color: #80cbc4;
+}
+
 .button a {
     padding: 0 2em;
     display: inline-block;
@@ -192,20 +192,16 @@ footer {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    text-decoration: none;
 }
 
 .button a:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
 
-.button a {
-    color: white;
-    text-decoration: none;
-}
-
 #output-terminals {
     height: 80%;
-    background-color: #aaaaaa;
+    background-color: #0f111a;
     display: flex;
     flex-direction: row;
 }
@@ -219,6 +215,7 @@ footer {
 
 .terminal h6 {
     height: 10%;
+    color: #8f93a2;
 }
 
 .terminal .rule {
@@ -227,7 +224,7 @@ footer {
 
 .terminal p {
     font-family: Courier New;
-    color: #EEEEEE;
+    color: #505672;
     font-size: 0.7em;
     height: 80%;
 }
