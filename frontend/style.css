@@ -181,11 +181,8 @@ footer {
     flex-direction: row;
 }
 
-#game-controls .button a {
-    color: #80cbc4;
-}
-
 .button a {
+    color: #80cbc4;
     padding: 0 2em;
     display: inline-block;
     height: 100%;
@@ -197,6 +194,17 @@ footer {
 
 .button a:hover {
     background-color: rgba(255, 255, 255, 0.1);
+}
+
+.disabled a {    
+    cursor: default;
+    color: #505672;
+    background-color: #0a0c12;
+}
+
+.disabled a:hover {
+    color: #505672;
+    background-color: #0a0c12;
 }
 
 #output-terminals {
