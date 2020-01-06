@@ -16,15 +16,15 @@ const (
 	// infoBufferSize is the maximum amount of messages from the
 	// engine that will be stored within the communications channel
 	infoBufferSize = 10
-	// handshakeTimeout is the maximum amount of time in seconds the
+	// handshakeTimeout is the maximum amount of time in nanoseconds the
 	// engine is allowed to perform the CFP handshake
-	handshakeTimeout = 5.0
-	// bestmoveTimeout is the maximum amount of time in seconds the
+	handshakeTimeout = 5.0 * time.Second
+	// bestmoveTimeout is the maximum amount of time in nanoseconds the
 	// engine is allowed to respond to a stop command with bestmove
-	bestmoveTimeout = 5.0
-	// readyokTimeout is the maximum amount of time in seconds the
+	bestmoveTimeout = 5.0 * time.Second
+	// readyokTimeout is the maximum amount of time in nanoseconds the
 	// engine is allowed to respond to an isready command with readyok
-	readyokTimeout = 5.0
+	readyokTimeout = 5.0 * time.Second
 )
 
 // CFPCommunicator is an interface to an engine that
