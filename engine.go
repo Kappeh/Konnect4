@@ -162,3 +162,10 @@ func (e *Engine) Quit() error {
 func (e *Engine) InfoChannel() <-chan string {
 	return e.communicator.InfoChannel()
 }
+
+// CommChannel provides a channel which get's populated
+// with all communications between the Protocol implimentation
+// and the actual engine's process.
+func (e *Engine) CommChannel() <-chan Communication {
+	return e.communicator.CommChannel()
+}

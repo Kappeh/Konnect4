@@ -16,6 +16,9 @@ const (
 	// infoBufferSize is the maximum amount of messages from the
 	// engine that will be stored within the communications channel
 	infoBufferSize = 10
+	// infoBufferSize is the maximum amount of messages to/from the
+	// engine that will be stored within the communications channel
+	commBufferSize = 10
 	// handshakeTimeout is the maximum amount of time in nanoseconds the
 	// engine is allowed to perform the CFP handshake
 	handshakeTimeout = 5.0 * time.Second
@@ -41,9 +44,10 @@ type CFPProtocol struct {
 	option chan Option
 	cfpok  chan bool
 	// Other communication channels
-	readyok  chan bool
-	bestmove chan int
-	info     chan string
+	readyok        chan bool
+	bestmove       chan int
+	info           chan string
+	communications chan Communication
 }
 
 // CFP creates a new Protocol that
@@ -55,13 +59,14 @@ func CFP(cmd *exec.Cmd) (Protocol, error) {
 	// Make new Protocol along with all channels used
 	// for sending signals around the Protocol
 	result := CFPProtocol{
-		name:     make(chan string),
-		author:   make(chan string),
-		option:   make(chan Option),
-		cfpok:    make(chan bool),
-		readyok:  make(chan bool),
-		bestmove: make(chan int),
-		info:     make(chan string, infoBufferSize),
+		name:           make(chan string),
+		author:         make(chan string),
+		option:         make(chan Option),
+		cfpok:          make(chan bool),
+		readyok:        make(chan bool),
+		bestmove:       make(chan int),
+		info:           make(chan string, infoBufferSize),
+		communications: make(chan Communication, commBufferSize),
 	}
 	// Aquire stdin and stdout pipes
 	var err error
@@ -87,6 +92,7 @@ func (c *CFPProtocol) Handshake(name, author *string, options *map[string]Option
 	if _, err := c.stdin.Write([]byte("cfp\n")); err != nil {
 		return errors.Wrap(err, "unable to send cfp command")
 	}
+	c.toEngine("cfp\n")
 	var (
 		timeout   = time.After(handshakeTimeout)
 		setName   = false
@@ -133,6 +139,7 @@ func (c *CFPProtocol) Debug(enable bool) error {
 	if _, err := c.stdin.Write([]byte(cmd)); err != nil {
 		return errors.Wrap(err, "couldn't send debug command")
 	}
+	c.toEngine(cmd)
 	return nil
 }
 
@@ -163,6 +170,7 @@ func (c *CFPProtocol) SetOption(o Option) error {
 	if _, err := c.stdin.Write([]byte(cmd)); err != nil {
 		return errors.Wrap(err, "couldn't send setoption command")
 	}
+	c.toEngine(cmd)
 	// Command sent successfully
 	return nil
 }
@@ -177,6 +185,7 @@ func (c *CFPProtocol) NewGame() error {
 	if _, err := c.stdin.Write([]byte("cfpnewgame\n")); err != nil {
 		return errors.Wrap(err, "couldn't send cfpnewgame command")
 	}
+	c.toEngine("cfpnewgame\n")
 	return nil
 }
 
@@ -212,6 +221,7 @@ func (c *CFPProtocol) Position(s State) error {
 	if _, err := c.stdin.Write([]byte(cmd)); err != nil {
 		return errors.Wrap(err, "couldn't send position command")
 	}
+	c.toEngine(cmd)
 	// Command successfully sent
 	return nil
 }
@@ -236,6 +246,7 @@ func (c *CFPProtocol) Go(moveTime float32) error {
 	if _, err := c.stdin.Write([]byte(cmd)); err != nil {
 		return errors.Wrap(err, "couldn't send go command")
 	}
+	c.toEngine(cmd)
 	// Command successfully sent
 	return nil
 }
@@ -253,6 +264,7 @@ func (c *CFPProtocol) Stop() (int, error) {
 	if _, err := c.stdin.Write([]byte("stop\n")); err != nil {
 		return 0, errors.Wrap(err, "couldn't send stop command")
 	}
+	c.toEngine("stop\n")
 	// Wait on bestmove command from engine
 	select {
 	case v := <-c.bestmove:
@@ -276,6 +288,7 @@ func (c *CFPProtocol) Quit() error {
 	if _, err := c.stdin.Write([]byte("quit\n")); err != nil {
 		return errors.Wrap(err, "couldn't send quit command")
 	}
+	c.toEngine("quit\n")
 	// Close stdin and stdout pipes
 	if err := c.stdin.Close(); err != nil {
 		return errors.Wrap(err, "couldn't close stdin pipe")
@@ -294,6 +307,31 @@ func (c *CFPProtocol) InfoChannel() <-chan string {
 	return c.info
 }
 
+// CommChannel should return a channel which get's populated
+// with all communications between the Protocol implimentation
+// and the actual engine's process.
+func (c *CFPProtocol) CommChannel() <-chan Communication {
+	return c.communications
+}
+
+// fromEngine adds a communication to the communications channel
+func (c *CFPProtocol) fromEngine(message string) {
+	c.communications <- Communication{
+		Time:     time.Now(),
+		ToEngine: false,
+		Message:  message,
+	}
+}
+
+// toEngine adds a communication to the communications channel
+func (c *CFPProtocol) toEngine(message string) {
+	c.communications <- Communication{
+		Time:     time.Now(),
+		ToEngine: true,
+		Message:  message,
+	}
+}
+
 // listenToEngine listens out for commands
 // sent by the engine via stdout
 func (c *CFPProtocol) listenToEngine() {
@@ -302,7 +340,9 @@ func (c *CFPProtocol) listenToEngine() {
 	// avoid race conditions
 	scanner := bufio.NewScanner(c.stdout)
 	for scanner.Scan() {
-		c.receivedCommand(scanner.Text())
+		text := scanner.Text()
+		c.fromEngine(text)
+		c.receivedCommand(text)
 	}
 }
 
@@ -314,6 +354,7 @@ func (c *CFPProtocol) waitForReady() error {
 	if _, err := c.stdin.Write([]byte("isready\n")); err != nil {
 		return errors.Wrap(err, "unable to send isready command")
 	}
+	c.toEngine("isready\n")
 	// Wait for response or timeout
 	select {
 	case <-time.After(readyokTimeout):

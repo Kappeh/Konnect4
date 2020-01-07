@@ -1,5 +1,9 @@
 package main
 
+import (
+	"time"
+)
+
 // Protocol is a way for the gui to communicate with the engine
 // Each implimentation would be a different protocol
 type Protocol interface {
@@ -33,4 +37,20 @@ type Protocol interface {
 	// InfoChannel should return a channel which get's populated
 	// with information outputted by the engine
 	InfoChannel() <-chan string
+	// CommChannel should return a channel which get's populated
+	// with all communications between the Protocol implimentation
+	// and the actual engine's process.
+	CommChannel() <-chan Communication
+}
+
+// Communication is a message that has been send either to the engine
+// or received from the engine
+type Communication struct {
+	// Time is the time that the communication happened
+	Time time.Time
+	// ToEngine indicated the direction of the message
+	// e.g. true = to the engine, false = from the engine
+	ToEngine bool
+	// Message is the actual command that was sent.
+	Message string
 }
