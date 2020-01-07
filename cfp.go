@@ -27,11 +27,11 @@ const (
 	readyokTimeout = 5.0 * time.Second
 )
 
-// CFPCommunicator is an interface to an engine that
+// CFPProtocol is an interface to an engine that
 // supports CFP. It stores the input and output streams
 // to the engine's process which are used to send and
 // receive commands to and from the engine.
-type CFPCommunicator struct {
+type CFPProtocol struct {
 	// Communication pipes
 	stdin  io.WriteCloser
 	stdout io.ReadCloser
@@ -46,15 +46,15 @@ type CFPCommunicator struct {
 	info     chan string
 }
 
-// NewCFPCommunicator creates a new Communicator that
+// CFP creates a new Protocol that
 // uses the CFP protocol to interact with an engine.
 // cmd should be the engine's process.
 // An error will be returned if the input and/or output pipes
 // cannot be aquired.
-func NewCFPCommunicator(cmd *exec.Cmd) (Communicator, error) {
-	// Make new Communicator along with all channels used
-	// for sending signals around the communicator
-	result := CFPCommunicator{
+func CFP(cmd *exec.Cmd) (Protocol, error) {
+	// Make new Protocol along with all channels used
+	// for sending signals around the Protocol
+	result := CFPProtocol{
 		name:     make(chan string),
 		author:   make(chan string),
 		option:   make(chan Option),
@@ -72,7 +72,7 @@ func NewCFPCommunicator(cmd *exec.Cmd) (Communicator, error) {
 		return nil, errors.Wrap(err, "couldn't aquire stdout pipe")
 	}
 	// Return the result
-	return Communicator(&result), nil
+	return &result, nil
 }
 
 // Handshake performs the CFP. During which, the name, author and
@@ -80,7 +80,7 @@ func NewCFPCommunicator(cmd *exec.Cmd) (Communicator, error) {
 // If the engine doesn't support CFP, doesn't perform the handshake
 // in time or doesn't provide required information, an error will
 // be returned.
-func (c *CFPCommunicator) Handshake(name, author *string, options *map[string]Option) error {
+func (c *CFPProtocol) Handshake(name, author *string, options *map[string]Option) error {
 	// Starts listening for commands from engine
 	go c.listenToEngine()
 	// Send command to initialize handshake
@@ -123,7 +123,7 @@ func (c *CFPCommunicator) Handshake(name, author *string, options *map[string]Op
 }
 
 // Debug enables or disables debug mode for the engine
-func (c *CFPCommunicator) Debug(enable bool) error {
+func (c *CFPProtocol) Debug(enable bool) error {
 	var cmd string
 	if enable {
 		cmd = "debug on\n"
@@ -139,7 +139,7 @@ func (c *CFPCommunicator) Debug(enable bool) error {
 // SetOption sets an internal parameter of the engine
 // The options have been specified by the engine
 // during the CFP handshake
-func (c *CFPCommunicator) SetOption(o Option) error {
+func (c *CFPProtocol) SetOption(o Option) error {
 	// Getting the value of the option as a string
 	var valueString string
 	// The format of the command depends on the option type
@@ -170,7 +170,7 @@ func (c *CFPCommunicator) SetOption(o Option) error {
 // NewGame tells the engine that the next position it
 // will receive is from a different game to the previous
 // position it was sent
-func (c *CFPCommunicator) NewGame() error {
+func (c *CFPProtocol) NewGame() error {
 	if err := c.waitForReady(); err != nil {
 		return errors.Wrap(err, "engine not ready")
 	}
@@ -183,7 +183,7 @@ func (c *CFPCommunicator) NewGame() error {
 // Position tells the engine to analyse a different
 // position. Usually because of a game reset or a move
 // has been made
-func (c *CFPCommunicator) Position(s State) error {
+func (c *CFPProtocol) Position(s State) error {
 	// Check that the engine is ready for new commands
 	if err := c.waitForReady(); err != nil {
 		return errors.Wrap(err, "engine not ready")
@@ -220,7 +220,7 @@ func (c *CFPCommunicator) Position(s State) error {
 // last position it was sent. In addition to this,
 // if moveTime is positive, the engine will be told to
 // complete it's move within the given time.
-func (c *CFPCommunicator) Go(moveTime float32) error {
+func (c *CFPProtocol) Go(moveTime float32) error {
 	// Check engine is ready for commands
 	if err := c.waitForReady(); err != nil {
 		return errors.Wrap(err, "engine not ready")
@@ -244,7 +244,7 @@ func (c *CFPCommunicator) Go(moveTime float32) error {
 // and return the best move that it found
 // If the engine doesn't provide a best move, an
 // error will be returned
-func (c *CFPCommunicator) Stop() (int, error) {
+func (c *CFPProtocol) Stop() (int, error) {
 	// Check engine is ready for commands
 	if err := c.waitForReady(); err != nil {
 		return 0, errors.Wrap(err, "engine not ready")
@@ -267,7 +267,7 @@ func (c *CFPCommunicator) Stop() (int, error) {
 // Quit tells the engine to quit as soon as possible and
 // closes the stdin and stdout pipes used to communicate
 // to the engine's process
-func (c *CFPCommunicator) Quit() error {
+func (c *CFPProtocol) Quit() error {
 	// Check engine is ready for commands
 	if err := c.waitForReady(); err != nil {
 		return errors.Wrap(err, "engine not ready")
@@ -290,13 +290,13 @@ func (c *CFPCommunicator) Quit() error {
 // InfoChannel returns a channel that get's populated
 // with the information received from the engine
 // via info commands
-func (c *CFPCommunicator) InfoChannel() <-chan string {
+func (c *CFPProtocol) InfoChannel() <-chan string {
 	return c.info
 }
 
 // listenToEngine listens out for commands
 // sent by the engine via stdout
-func (c *CFPCommunicator) listenToEngine() {
+func (c *CFPProtocol) listenToEngine() {
 	// Parsing commands on one goroutine
 	// to maintain order or commands and
 	// avoid race conditions
@@ -309,7 +309,7 @@ func (c *CFPCommunicator) listenToEngine() {
 // waitForReady sends an isready command to the engine
 // and waits until the engine responds with a readyok command
 // If the engine takes too long, an error will be returned
-func (c *CFPCommunicator) waitForReady() error {
+func (c *CFPProtocol) waitForReady() error {
 	// Send isready command
 	if _, err := c.stdin.Write([]byte("isready\n")); err != nil {
 		return errors.Wrap(err, "unable to send isready command")
@@ -329,7 +329,7 @@ func (c *CFPCommunicator) waitForReady() error {
 // from the engine. Either an event is triggered
 // of the command string is sent to another function
 // to be parsed and handled fully
-func (c *CFPCommunicator) receivedCommand(msg string) {
+func (c *CFPProtocol) receivedCommand(msg string) {
 	args := strings.Split(msg, " ")
 	if len(args) == 0 {
 		return
@@ -352,7 +352,7 @@ func (c *CFPCommunicator) receivedCommand(msg string) {
 
 // receivedIDCommand is called when an id command is received
 // from the engine
-func (c *CFPCommunicator) receivedIDCommand(args []string) {
+func (c *CFPProtocol) receivedIDCommand(args []string) {
 	if len(args) < 2 {
 		return
 	}
@@ -366,7 +366,7 @@ func (c *CFPCommunicator) receivedIDCommand(args []string) {
 
 // receivedIDCommand is called when a bestmove command is received
 // from the engine
-func (c *CFPCommunicator) receivedBestMoveCommand(args []string) {
+func (c *CFPProtocol) receivedBestMoveCommand(args []string) {
 	if len(args) < 1 {
 		return
 	}
@@ -379,7 +379,7 @@ func (c *CFPCommunicator) receivedBestMoveCommand(args []string) {
 
 // receivedIDCommand is called when an info command is received
 // from the engine
-func (c *CFPCommunicator) receivedInfoCommand(args []string) {
+func (c *CFPProtocol) receivedInfoCommand(args []string) {
 	if len(args) < 1 {
 		return
 	}
@@ -403,7 +403,7 @@ func sliceIndex(limit int, predicate func(int) bool) int {
 // is being specified and then calls the respective parsing function
 // Note: As specified in the CFP protocol, if the command
 // cannot be parsed, it is ignored.
-func (c *CFPCommunicator) receivedOptionCommand(args []string) {
+func (c *CFPProtocol) receivedOptionCommand(args []string) {
 	// Getting index of type identifier
 	typeIndex := sliceIndex(len(args), func(i int) bool {
 		return strings.ToLower(args[i]) == "type"
@@ -448,7 +448,7 @@ type Parameter struct {
 // extractParameters identifies keywords in an argument list
 // and following sections of the string which are to be interpreted as
 // the parameters' values
-func (c *CFPCommunicator) extractParameters(args []string) []Parameter {
+func (c *CFPProtocol) extractParameters(args []string) []Parameter {
 	// Map to quickly identify keywords
 	identifiers := map[string]bool{
 		"name":    true,
@@ -492,7 +492,7 @@ func (c *CFPCommunicator) extractParameters(args []string) []Parameter {
 }
 
 // checkOption creates a CheckBox from an argument list
-func (c *CFPCommunicator) checkOption(args []string) (Option, error) {
+func (c *CFPProtocol) checkOption(args []string) (Option, error) {
 	var (
 		// The list of extracted parameters
 		parameters = c.extractParameters(args)
@@ -527,7 +527,7 @@ func (c *CFPCommunicator) checkOption(args []string) (Option, error) {
 }
 
 // spinOption creates a Spinner from an argument list
-func (c *CFPCommunicator) spinOption(args []string) (Option, error) {
+func (c *CFPProtocol) spinOption(args []string) (Option, error) {
 	var (
 		// The list of extracted parameters
 		parameters = c.extractParameters(args)
@@ -579,7 +579,7 @@ func (c *CFPCommunicator) spinOption(args []string) (Option, error) {
 }
 
 // buttonOption creates a Button from an argument list
-func (c *CFPCommunicator) buttonOption(args []string) (Option, error) {
+func (c *CFPProtocol) buttonOption(args []string) (Option, error) {
 	var (
 		// The list of extracted parameters
 		parameters = c.extractParameters(args)
@@ -607,7 +607,7 @@ func (c *CFPCommunicator) buttonOption(args []string) (Option, error) {
 }
 
 // comboOption creates a ComboBox from an argument list
-func (c *CFPCommunicator) comboOption(args []string) (Option, error) {
+func (c *CFPProtocol) comboOption(args []string) (Option, error) {
 	var (
 		// The list of extracted parameters
 		parameters = c.extractParameters(args)
@@ -647,7 +647,7 @@ func (c *CFPCommunicator) comboOption(args []string) (Option, error) {
 }
 
 // stringOption creates a String from an argument list
-func (c *CFPCommunicator) stringOption(args []string) (Option, error) {
+func (c *CFPProtocol) stringOption(args []string) (Option, error) {
 	var (
 		// The list of extracted parameters
 		parameters = c.extractParameters(args)

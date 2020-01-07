@@ -1,8 +1,8 @@
 package main
 
-// Communicator is a way for the gui to communicate with the engine
+// Protocol is a way for the gui to communicate with the engine
 // Each implimentation would be a different protocol
-type Communicator interface {
+type Protocol interface {
 	// Handshake connects to a process and performs a protocol
 	// handshake. The name, author and options should be
 	// aquired from the engine during this process

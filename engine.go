@@ -18,7 +18,7 @@ import (
 type Engine struct {
 	// Used for interacting with the engine
 	cmd          *exec.Cmd
-	communicator Communicator
+	communicator Protocol
 	// Information provided by the engine
 	Name    string
 	Author  string
@@ -35,7 +35,7 @@ type Engine struct {
 // be provided by the engine and extracted into the datastructure
 // If: the engine is not found; a connection couldn't be established
 // or the protocol handshake failed, an error will be returned
-func NewEngine(path string, comm func(*exec.Cmd) (Communicator, error)) (*Engine, error) {
+func NewEngine(path string, protocol func(*exec.Cmd) (Protocol, error)) (*Engine, error) {
 	// Checking if the engine file exists
 	path = "engines/" + path
 	if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -50,7 +50,7 @@ func NewEngine(path string, comm func(*exec.Cmd) (Communicator, error)) (*Engine
 	}
 	var err error
 	// Establishing connection to engine
-	engine.communicator, err = comm(engine.cmd)
+	engine.communicator, err = protocol(engine.cmd)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't create communicator")
 	}
