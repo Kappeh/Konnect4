@@ -4,10 +4,12 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -27,6 +29,10 @@ type Server struct {
 	nextClientID   int
 	connections    int
 	maxConnections int
+
+	// staticAddress is the path to the root of the static
+	// content to be served
+	staticAddress string
 
 	serverEvents chan ServerEvent
 	clientEvents chan ClientEvent
@@ -49,10 +55,16 @@ type ClientEvent struct {
 }
 
 // NewServer creates a new server
-func NewServer() *Server {
+func NewServer(staticAddress string) (*Server, error) {
+	if _, err := os.Stat(staticAddress); os.IsNotExist(err) {
+		return nil, errors.Wrap(err, "couldn't find engines root directory")
+	} else if err != nil {
+		return nil, errors.Wrap(err, "couldn't find engines root directory")
+	}
 	return &Server{
 		clients:        make(map[int]*websocket.Conn),
 		maxConnections: MaxConnections,
+		staticAddress:  staticAddress,
 		serverEvents:   make(chan ServerEvent, EventBufferSize),
 		clientEvents:   make(chan ClientEvent, EventBufferSize),
 		upgrader: websocket.Upgrader{
@@ -60,7 +72,7 @@ func NewServer() *Server {
 			WriteBufferSize: 1024,
 			CheckOrigin:     func(*http.Request) bool { return true },
 		},
-	}
+	}, nil
 }
 
 // Start starts route handles for http requests, starts the
@@ -107,8 +119,8 @@ func (s *Server) Respond(evt ClientEvent, response string) {
 // on the server e.g. html, css, js, images
 func (s *Server) staticHandler(w http.ResponseWriter, r *http.Request) {
 	// Correcting path
-	path := "frontend/" + r.URL.Path[1:]
-	if path == "frontend/" {
+	path := s.staticAddress + "/" + r.URL.Path[1:]
+	if r.URL.Path[1:] == "" {
 		path += "index.html"
 	}
 	// Getting file contents
