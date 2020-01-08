@@ -46,10 +46,14 @@ nav ul {
     justify-content: right;
 }
 
+#main-wrapper {
+    height: 95%;
+}
+
 main {
+    height: 100%;
     display: flex;
     flex-direction: column;
-    height: 95%;
     background-color: #0f111a;
 }
 
@@ -137,6 +141,10 @@ h3 {
     text-align: center;
     background-color: #0a0c12;
     cursor: pointer;
+}
+
+#load-engine-button:hover {
+    background-color: #212530;
 }
 
 #load-engine-button p {
@@ -239,4 +247,93 @@ footer {
 
 .scroll {
     overflow-y: scroll;
+}
+
+/* Load engine overlay */
+#load-engine-overlay {
+    display: flex;
+    height: 95%;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    position: absolute;
+    justify-content: center;
+    align-items: center;
+    display: none;
+}
+
+#load-engine-list {
+    border: 5px solid #0a0c12;
+    background-color: #0f111a;
+    padding: 2em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.prefix {
+    color: #505672;
+    padding-right: 0.3em;
+    font-size: 0.8em;
+}
+
+.file-path {
+    width: 35em;
+    margin: 0.1em;
+    display: flex;
+    flex-direction: row;
+    font-style: italic;
+    justify-content: space-between;
+    background-color: #0a0c12;
+    color: #8f93a2;
+}
+
+.file-info {
+    padding: 1em;
+}
+
+.file-button {
+    padding: 1em;
+    background-color: #394e33;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.file-button:hover {
+    background-color: #4e6842;
+}
+
+.go-back-button {
+    padding: 0.7em 1em;
+    background-color: #772d2d;
+    font-weight: bold;
+    cursor: pointer;
+    color: #8f93a2;
+    margin: 0.1em;
+    align-self: end;
+}
+
+.go-back-button:hover {
+    background-color: #914242;
+}
+
+.loader {
+    border: 0.3em solid #0a0c12;
+    border-top: 0.3em solid #3498db;
+    border-radius: 50%;
+    width: 2em;
+    height: 2em;
+    -webkit-animation: spin 1s linear infinite;
+    animation: spin 1s linear infinite;
+
+    display: none;
+}
+  
+@-webkit-keyframes spin {
+    0% { -webkit-transform: rotate(0deg); }
+    100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }

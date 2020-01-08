@@ -20,9 +20,10 @@ const PREVIOUS_BUTTON       = 4;
 const PLAY_PAUSE_BUTTON     = 5;
 const NEXT_BUTTON           = 6;
 const END_BUTTON            = 7;
+const GO_BACK_BUTTON        = 8;
 
 // Constants for engine specific controls
-const ENGINE_BUTTONS_START      = 8;
+const ENGINE_BUTTONS_START      = 9;
 const ENGINE_BUTTONS_STRIDE     = 3;
 const ENGINE_PLAYER1_BUTTON     = 0;
 const ENGINE_PLAYER2_BUTTON     = 1;
@@ -95,7 +96,8 @@ function buttonClick() {
         return;
     switch (this.buttonId) {
     case LOAD_ENGINE_BUTTON:
-        // Not Implimented    
+        gui.showOverlay();
+        requestEnginePaths();
         return;
     case NEW_GAME_BUTTON:
         requestNewGame();
@@ -132,6 +134,9 @@ function buttonClick() {
             gui.updateButtons();
         }
         return;
+    case GO_BACK_BUTTON:
+        gui.hideOverLay();
+        return;
     }
     // If we reach this point, it's en engine specific button
     let tmp         = this.buttonId - ENGINE_BUTTONS_START;
@@ -149,6 +154,11 @@ class GUI {
         this.engines            = {};
         
         // Getting DOM elements
+        this.loadOverlay        = document.getElementById("load-engine-overlay");
+        this.overlayLoader      = document.getElementsByClassName("loader")[0];
+        this.loadList           = document.getElementById("load-engine-list");
+        this.goBackButton       = document.getElementsByClassName("go-back-button")[0];
+
         this.engineList         = document.getElementById("engine-list");
         
         this.loadEngineButton   = document.getElementById("load-engine-button");
@@ -185,6 +195,7 @@ class GUI {
         this.playPauseButton.buttonId   = PLAY_PAUSE_BUTTON;
         this.nextButton.buttonId        = NEXT_BUTTON;
         this.endButton.buttonId         = END_BUTTON;
+        this.goBackButton.buttonId      = GO_BACK_BUTTON;
 
         this.loadEngineButton.addEventListener("click", buttonClick, false);
         this.newGameButton.addEventListener("click", buttonClick, false);
@@ -194,6 +205,47 @@ class GUI {
         this.playPauseButton.addEventListener("click", buttonClick, false);
         this.nextButton.addEventListener("click", buttonClick, false);
         this.endButton.addEventListener("click", buttonClick, false);
+        this.goBackButton.addEventListener("click", buttonClick, false);
+    }
+
+    showOverlay() {
+        let filepaths = this.loadList.getElementsByClassName("file-path");
+        for (let i = filepaths.length-1; i >= 0; i--) {
+            filepaths[i].remove();
+        }
+        this.goBackButton.style.display     = "none";
+        this.overlayLoader.style.display    = "block";
+        this.loadOverlay.style.display      = "flex";
+    }
+    
+    hidePathLoader() {
+        this.goBackButton.style.display     = "block";
+        this.overlayLoader.style.display    = "none";
+
+    }
+
+    showFilepath(name) {
+        let filepath = document.createElement("li");
+        filepath.classList.add("file-path");
+        let fileinfo = document.createElement("section");
+        fileinfo.classList.add("file-info");
+        let pathtext = document.createElement("p");
+        pathtext.innerHTML = "<span class=\"prefix\">engines/</span>" + name;
+        fileinfo.appendChild(pathtext);
+        filepath.appendChild(fileinfo);
+        let filebutton = document.createElement("section");
+        filebutton.classList.add("file-button");
+        filebutton.innerHTML = "<p>Load</p>";
+        filepath.appendChild(filebutton);
+        this.loadList.insertBefore(filepath, this.goBackButton);
+        filebutton.addEventListener("click", () => {
+            requestEngineLoad(name);
+            gui.hideOverLay();
+        });
+    }
+
+    hideOverLay() {
+        this.loadOverlay.style.display = "none";
     }
 
     loadEngine(engine) {
@@ -366,6 +418,8 @@ class Engine {
 function command(msg) {
     args = msg.split(" ");
     switch (args.shift()) {
+    case "enginepaths":
+        showPaths(args);
     case "engines":
         switch (args.shift()) {
         case "load":
@@ -416,10 +470,24 @@ function command(msg) {
     }
 }
 
+function showPaths(args) {
+    gui.hidePathLoader();
+    let lastPathIndex = null;
+    for (let i = 0; i < args.length; i++) {
+        if (args[i] == "path" && lastPathIndex != null) {
+            gui.showFilepath(args.slice(lastPathIndex+1, i).join(" "));
+        }
+        if (args[i] == "path") {
+            lastPathIndex = i;
+        }
+    }
+    gui.showFilepath(args.slice(lastPathIndex+1, args.length).join(" "));
+}
+
 function loadEngines(args) {
     let lastEngineIndex = null;
     for (let i = 0; i < args.length; i++) {
-        if (args[i] == "engine" || lastEngineIndex != null) {
+        if (args[i] == "engine" && lastEngineIndex != null) {
             loadEngine(args.slice(lastEngineIndex+1, i));
         }
         if (args[i] == "engine") {
@@ -550,6 +618,14 @@ function requestEngineOperation(engineId, button) {
 
 function requestPlayers(player1, player2) {
     socket.send("setplayers player1 "+player1+" player2 "+player2);
+}
+
+function requestEnginePaths() {
+    socket.send("enginepaths");
+}
+
+function requestEngineLoad(path) {
+    socket.send("engine load path "+path);
 }
 
 function requestEngineUnload(engineId) {

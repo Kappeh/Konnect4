@@ -24,62 +24,72 @@
                 </ul>
             </nav>
         </header>
-        <main>
-            <div class="horizontal-content">    
-                <section id="engine-list" class="scroll">
-                    <section id="load-engine-button">
-                        <p>Load Engine</p>
-                    </section>
-                </section>
-                <section id="game-screen">
-                    <canvas id="game-screen-canvas">
-                        Your browser doesn't support canvas.
-                    </canvas>
-                </section>
+        <article id="main-wrapper">
+            <div id="load-engine-overlay">
+                <ul id="load-engine-list">
+                    <li class="go-back-button">
+                        <p>Go Back</p>
+                    </li>
+                    <li class="loader"></li>
+                </ul>
             </div>
-            <footer>
-                <section id="game-controls">
-                    <ul class="general-controls">
-                        <li class="button disabled" id="new-game">
-                            <a href="#">New Game</a>
-                        </li>
-                        <li class="button disabled" id="setup-board">
-                            <a href="#">Setup Board</a>
-                        </li>
-                    </ul>
-                    <ul class="game-controls">
-                        <li class="button disabled" id="start">
-                            <a href="#">Start</a>
-                        </li>
-                        <li class="button disabled" id="previous">
-                            <a href="#">Previous</a>
-                        </li>
-                        <li class="button disabled" id="play-pause">
-                            <a href="#">Play</a>
-                        </li>
-                        <li class="button disabled" id="next">
-                            <a href="#">Next</a>
-                        </li>
-                        <li class="button disabled" id="end">
-                            <a href="#">End</a>
-                        </li>
-                    </ul>
-                </section>
-                <section id="output-terminals">
-                    <section id="output-terminal" class="terminal">
-                        <h6>Output Terminal</h6>
-                        <span class="rule"></span>
-                        <p class="scroll">
-                        </p>
+            <main>
+                <div class="horizontal-content">    
+                    <section id="engine-list" class="scroll">
+                        <section id="load-engine-button">
+                            <p>Load Engine</p>
+                        </section>
                     </section>
-                    <section id="communications-terminal" class="terminal">
-                        <h6>Communications Terminal</h6>
-                        <span class="rule"></span>
-                        <p class="scroll">
-                        </p>
+                    <section id="game-screen">
+                        <canvas id="game-screen-canvas">
+                            Your browser doesn't support canvas.
+                        </canvas>
                     </section>
-                </section>
-            </footer>
-        </main>
+                </div>
+                <footer>
+                    <section id="game-controls">
+                        <ul class="general-controls">
+                            <li class="button disabled" id="new-game">
+                                <a href="#">New Game</a>
+                            </li>
+                            <li class="button disabled" id="setup-board">
+                                <a href="#">Setup Board</a>
+                            </li>
+                        </ul>
+                        <ul class="game-controls">
+                            <li class="button disabled" id="start">
+                                <a href="#">Start</a>
+                            </li>
+                            <li class="button disabled" id="previous">
+                                <a href="#">Previous</a>
+                            </li>
+                            <li class="button disabled" id="play-pause">
+                                <a href="#">Play</a>
+                            </li>
+                            <li class="button disabled" id="next">
+                                <a href="#">Next</a>
+                            </li>
+                            <li class="button disabled" id="end">
+                                <a href="#">End</a>
+                            </li>
+                        </ul>
+                    </section>
+                    <section id="output-terminals">
+                        <section id="output-terminal" class="terminal">
+                            <h6>Output Terminal</h6>
+                            <span class="rule"></span>
+                            <p class="scroll">
+                            </p>
+                        </section>
+                        <section id="communications-terminal" class="terminal">
+                            <h6>Communications Terminal</h6>
+                            <span class="rule"></span>
+                            <p class="scroll">
+                            </p>
+                        </section>
+                    </section>
+                </footer>
+            </main>
+        </article>
     </body>
 </html>
