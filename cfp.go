@@ -230,7 +230,7 @@ func (c *CFPProtocol) Position(s State) error {
 // last position it was sent. In addition to this,
 // if moveTime is positive, the engine will be told to
 // complete it's move within the given time.
-func (c *CFPProtocol) Go(moveTime float32) error {
+func (c *CFPProtocol) Go(moveTime time.Duration) error {
 	// Check engine is ready for commands
 	if err := c.waitForReady(); err != nil {
 		return errors.Wrap(err, "engine not ready")
@@ -240,7 +240,7 @@ func (c *CFPProtocol) Go(moveTime float32) error {
 	if moveTime <= 0.0 {
 		cmd = "go\n"
 	} else {
-		cmd = fmt.Sprintf("go movetime %f\n", moveTime)
+		cmd = fmt.Sprintf("go movetime %f\n", float64(moveTime)/float64(time.Second))
 	}
 	// Sending command
 	if _, err := c.stdin.Write([]byte(cmd)); err != nil {

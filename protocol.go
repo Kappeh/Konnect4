@@ -27,7 +27,7 @@ type Protocol interface {
 	Position(State) error
 	// Go tells the engine that it should start analysing the
 	// position and the maximum amount of time it has to think
-	Go(float32) error
+	Go(time.Duration) error
 	// Stop tells the engine to stop thinking as soon as possible
 	// The best move the engine found is returned
 	Stop() (int, error)

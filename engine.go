@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -114,7 +115,7 @@ func (e *Engine) Position(s State) error {
 // If moveTime is positive, the engine will be told that it
 // has moveTime seconds to analyse the position before it
 // will be asked to stop and provide its best move
-func (e *Engine) Go(moveTime float32) error {
+func (e *Engine) Go(moveTime time.Duration) error {
 	if !e.ready {
 		return errors.New("engine is not ready")
 	}
