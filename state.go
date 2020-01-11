@@ -31,6 +31,9 @@ type State struct {
 	// Winner can be Empty, in this case the game is not over.
 	// Otherwise, it's Player1, Player2 or Tie.
 	Winner int
+	// Turn counts which turn it is within the State
+	// This is used for infering the amount of tiles on the board
+	Turn int
 }
 
 // StateFromCFP will generate a State object from a string
@@ -40,14 +43,17 @@ func StateFromCFP(p string) (State, error) {
 	if len(p) != 43 {
 		return result, errors.New("invalid position")
 	}
+	result.Turn = 0
 	for i, v := range p[:42] {
 		switch v {
 		case '0':
 			result.Tiles[i] = Empty
 		case '1':
 			result.Tiles[i] = Player1
+			result.Turn++
 		case '2':
 			result.Tiles[i] = Player2
+			result.Turn++
 		default:
 			return result, errors.New("invalid position")
 		}
@@ -69,6 +75,7 @@ func NewState() State {
 	result := State{
 		Player: Player1,
 		Winner: Empty,
+		Turn:   0,
 	}
 	for i := 0; i < 42; i++ {
 		result.Tiles[i] = Empty
@@ -98,6 +105,7 @@ func (s State) dropTile(player, column int) (State, error) {
 		return s, errors.New("illegal move")
 	}
 	s.Tiles[i] = player
+	s.Turn++
 	return s, nil
 }
 
@@ -116,6 +124,8 @@ func (s State) NextState(column int) (State, error) {
 	}
 	if winningMove {
 		result.Winner = result.Player
+	} else if result.Turn == 42 {
+		result.Winner = Tie
 	}
 	// Switch players
 	if result.Player == Player1 {
@@ -176,10 +186,8 @@ LINE_LOOP:
 	}
 	// If there is no four in a row,
 	// check if the board is not full
-	for i := 0; i < 42; i++ {
-		if s.Tiles[i] == Empty {
-			return Empty
-		}
+	if s.Turn < 42 {
+		return Empty
 	}
 	// If the board is full, it's a tie
 	return Tie
