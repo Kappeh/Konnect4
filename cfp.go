@@ -13,12 +13,6 @@ import (
 )
 
 const (
-	// infoBufferSize is the maximum amount of messages from the
-	// engine that will be stored within the communications channel
-	infoBufferSize = 10
-	// infoBufferSize is the maximum amount of messages to/from the
-	// engine that will be stored within the communications channel
-	commBufferSize = 10
 	// handshakeTimeout is the maximum amount of time in nanoseconds the
 	// engine is allowed to perform the CFP handshake
 	handshakeTimeout = 5.0 * time.Second
@@ -46,8 +40,8 @@ type CFPProtocol struct {
 	// Other communication channels
 	readyok        chan bool
 	bestmove       chan int
-	info           chan string
-	communications chan Communication
+	info           chan<- string
+	communications chan<- Communication
 }
 
 // CFP creates a new Protocol that
@@ -59,14 +53,12 @@ func CFP(cmd *exec.Cmd) (Protocol, error) {
 	// Make new Protocol along with all channels used
 	// for sending signals around the Protocol
 	result := CFPProtocol{
-		name:           make(chan string),
-		author:         make(chan string),
-		option:         make(chan Option),
-		cfpok:          make(chan bool),
-		readyok:        make(chan bool),
-		bestmove:       make(chan int),
-		info:           make(chan string, infoBufferSize),
-		communications: make(chan Communication, commBufferSize),
+		name:     make(chan string),
+		author:   make(chan string),
+		option:   make(chan Option),
+		cfpok:    make(chan bool),
+		readyok:  make(chan bool),
+		bestmove: make(chan int),
 	}
 	// Aquire stdin and stdout pipes
 	var err error
@@ -300,22 +292,23 @@ func (c *CFPProtocol) Quit() error {
 	return nil
 }
 
-// InfoChannel returns a channel that get's populated
-// with the information received from the engine
-// via info commands
-func (c *CFPProtocol) InfoChannel() <-chan string {
-	return c.info
+// NotifyInfo sets the channel in which any info commands
+// from the engine should be send to
+func (c *CFPProtocol) NotifyInfo(channel chan<- string) {
+	c.info = channel
 }
 
-// CommChannel should return a channel which get's populated
-// with all communications between the Protocol implimentation
-// and the actual engine's process.
-func (c *CFPProtocol) CommChannel() <-chan Communication {
-	return c.communications
+// NotifyComm sets the channel in which any communications
+// between CFP and the engine are to be sent
+func (c *CFPProtocol) NotifyComm(channel chan<- Communication) {
+	c.communications = channel
 }
 
 // fromEngine adds a communication to the communications channel
 func (c *CFPProtocol) fromEngine(message string) {
+	if c.communications == nil {
+		return
+	}
 	c.communications <- Communication{
 		Time:     time.Now(),
 		ToEngine: false,
@@ -325,6 +318,9 @@ func (c *CFPProtocol) fromEngine(message string) {
 
 // toEngine adds a communication to the communications channel
 func (c *CFPProtocol) toEngine(message string) {
+	if c.communications == nil {
+		return
+	}
 	c.communications <- Communication{
 		Time:     time.Now(),
 		ToEngine: true,
@@ -421,7 +417,7 @@ func (c *CFPProtocol) receivedBestMoveCommand(args []string) {
 // receivedIDCommand is called when an info command is received
 // from the engine
 func (c *CFPProtocol) receivedInfoCommand(args []string) {
-	if len(args) < 1 {
+	if len(args) < 1 || c.info == nil {
 		return
 	}
 	c.info <- strings.Join(args, " ")

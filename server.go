@@ -34,7 +34,7 @@ type Server struct {
 	staticAddress string
 
 	serverEvents chan ServerEvent
-	clientEvents chan ClientEvent
+	clientEvents chan<- ClientEvent
 
 	upgrader websocket.Upgrader
 }
@@ -65,7 +65,6 @@ func NewServer(staticAddress string) (*Server, error) {
 		maxConnections: MaxConnections,
 		staticAddress:  staticAddress,
 		serverEvents:   make(chan ServerEvent, EventBufferSize),
-		clientEvents:   make(chan ClientEvent, EventBufferSize),
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
@@ -93,14 +92,6 @@ func (s *Server) TriggerEvent(evt ServerEvent) {
 	s.serverEvents <- evt
 }
 
-// ClientEvent returns a ClientEvent when a client sends
-// a message through it's WebSocket connection. Usually
-// requesting something to happen on the server.
-func (s *Server) ClientEvent() (ClientEvent, bool) {
-	evt, ok := <-s.clientEvents
-	return evt, ok
-}
-
 // Respond is used to send a message back to a client
 // after a request from ClientEvent.
 func (s *Server) Respond(evt ClientEvent, response string) {
@@ -112,6 +103,12 @@ func (s *Server) Respond(evt ClientEvent, response string) {
 	}
 	client.WriteMessage(websocket.TextMessage, []byte(response))
 	s.lock.RUnlock()
+}
+
+// NotifyClientEvents sets the channel in which any client event
+// should be sent to
+func (s *Server) NotifyClientEvents(channel chan<- ClientEvent) {
+	s.clientEvents = channel
 }
 
 // staticHandler serves any of the static content
@@ -175,6 +172,9 @@ func (s *Server) socketListener(clientID int, conn *websocket.Conn) {
 		_, p, err := conn.ReadMessage()
 		if err != nil {
 			break
+		}
+		if s.clientEvents == nil {
+			continue
 		}
 		s.clientEvents <- ClientEvent{
 			ClientID:  clientID,

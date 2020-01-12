@@ -34,13 +34,13 @@ type Protocol interface {
 	// Quit should close all connections to the process. and
 	// tell the engine to quit as soon as possible.
 	Quit() error
-	// InfoChannel should return a channel which get's populated
-	// with information outputted by the engine
-	InfoChannel() <-chan string
-	// CommChannel should return a channel which get's populated
-	// with all communications between the Protocol implimentation
-	// and the actual engine's process.
-	CommChannel() <-chan Communication
+	// NotifyInfo tells the protocol to send any info events to
+	// the provided channel
+	NotifyInfo(chan<- string)
+	// NotifyComm tells the protocol to send any communications
+	// between the protocol implimentation and the actial engine
+	// to the provided channel.
+	NotifyComm(chan<- Communication)
 }
 
 // Communication is a message that has been send either to the engine

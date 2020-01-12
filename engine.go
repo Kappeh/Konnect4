@@ -158,15 +158,14 @@ func (e *Engine) Quit() error {
 	return e.cmd.Wait() // goroutine may hang here
 }
 
-// InfoChannel provides a channel which will be populated
-// with information provided by the engine
-func (e *Engine) InfoChannel() <-chan string {
-	return e.communicator.InfoChannel()
+// NotifyInfo sets the channel in which any information
+// from the engine should be sent to
+func (e *Engine) NotifyInfo(channel chan<- string) {
+	e.communicator.NotifyInfo(channel)
 }
 
-// CommChannel provides a channel which get's populated
-// with all communications between the Protocol implimentation
-// and the actual engine's process.
-func (e *Engine) CommChannel() <-chan Communication {
-	return e.communicator.CommChannel()
+// NotifyComm sets the channel in which communications between
+// the protocol implimentation and the engine should be send to
+func (e *Engine) NotifyComm(channel chan<- Communication) {
+	e.communicator.NotifyComm(channel)
 }
