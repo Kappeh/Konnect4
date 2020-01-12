@@ -2,7 +2,6 @@ package main
 
 import (
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -79,14 +78,14 @@ func NewServer(staticAddress string) (*Server, error) {
 // server event system and serves a static webpage and a
 // WebSocket endpoint. Once started, the server will run
 // until the program is terminated.
-func (s *Server) Start() {
+func (s *Server) Start() error {
 	// Setting up routes
 	http.HandleFunc("/", s.staticHandler)
 	http.HandleFunc("/ws", s.wsEndpoint)
 	// Listening to server events
 	go s.serverEventListener()
 	// Serving content to clients
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	return http.ListenAndServe(":8080", nil)
 }
 
 // TriggerEvent is used to send a command to all WebSocket connections
