@@ -437,6 +437,7 @@ func (d *Develop) setPlayers(player1, player2 int) error {
 		if err != nil {
 			return errors.Wrap(err, "couldn't set player1")
 		}
+		d.player1EngineID = player1
 	}
 	// Try to set player2
 	if engine2 != nil {
@@ -444,6 +445,7 @@ func (d *Develop) setPlayers(player1, player2 int) error {
 		if err != nil {
 			return errors.Wrap(err, "couldn't set player2")
 		}
+		d.player2EngineID = player1
 	}
 	// If this operation updated anything, send update to all clients
 	if engine1 != nil || engine2 != nil {
