@@ -18,6 +18,7 @@ import (
 // specific protocols
 type Engine struct {
 	// Used for interacting with the engine
+	Path         string
 	cmd          *exec.Cmd
 	communicator Protocol
 	// Information provided by the engine
@@ -46,6 +47,7 @@ func NewEngine(path string, protocol func(*exec.Cmd) (Protocol, error)) (*Engine
 	}
 	// Making engine struct
 	engine := Engine{
+		Path:    path,
 		cmd:     exec.Command(path),
 		Options: make(map[string]Option),
 	}
