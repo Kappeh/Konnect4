@@ -252,7 +252,7 @@ func (g *Game) gameLoop() {
 			g.Events <- NewStateEvent{State: g.State}
 		}
 	}
-	if g.Events != nil {
+	if g.Events != nil && g.State.Winner != Empty {
 		g.Events <- GameOverEvent{Winner: g.State.Winner}
 	}
 	g.Running = false
