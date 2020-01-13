@@ -46,7 +46,34 @@ type Game struct {
 	// PauseSignal is for sending a signal into the gameloop
 	// from another goroutine to stop
 	PauseSignal chan bool
+
+	// Events is where all events that happen when the game is
+	// running is to be sent. This includes when a new position
+	// is reached and when the game is over
+	Events chan<- GameEvent
 }
+
+// GameEvent is an interface that allows multiple types of events
+// to be handled using the same channel
+type GameEvent interface {
+	GameEvent()
+}
+
+// NewStateEvent it triggered when a new position is reached
+type NewStateEvent struct {
+	State State
+}
+
+// GameEvent allows NewStateEvent to impliment the GameEvent interface
+func (NewStateEvent) GameEvent() {}
+
+// GameOverEvent is triggered when the game finishes
+type GameOverEvent struct {
+	Winner int
+}
+
+// GameEvent allows GameOverEvent to impliment the GameEvent interface
+func (GameOverEvent) GameEvent() {}
 
 // NewGame returns a new game with the default timeout options
 // and a new starting position
@@ -166,6 +193,12 @@ func (g *Game) Play() error {
 		if err != nil {
 			return errors.Wrap(err, "unable to play turn")
 		}
+		if g.Events != nil {
+			g.Events <- NewStateEvent{State: g.State}
+		}
+	}
+	if g.Events != nil {
+		g.Events <- GameOverEvent{Winner: g.State.Winner}
 	}
 	// Game has finished being played, return successfully
 	return nil
@@ -181,6 +214,13 @@ func (g *Game) Pause() error {
 	g.Running = false
 	g.PauseSignal <- true
 	return nil
+}
+
+// NotifyEvents sets the channel in which game events
+// are to be sent to. This includes when the game is over
+// and when a new position is reached
+func (g *Game) NotifyEvents(channel chan<- GameEvent) {
+	g.Events = channel
 }
 
 // currentPlayer gets the player that is to make the next move
