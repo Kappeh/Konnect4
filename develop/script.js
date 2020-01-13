@@ -52,7 +52,7 @@ class State {
     }
 
     unloadEngine(engineID) {
-        delete this.engines["engine"+engine.id];
+        delete this.engines["engine"+engineID];
         if (this.player1ID == engineID)
             this.player1ID = -1;
         if (this.player2ID == engineID)
@@ -293,7 +293,7 @@ class GUI {
         this.engineList.insertBefore(this.engines["engine"+engine.id], this.loadEngineButton); 
     }
 
-    removeEngine(engineID) {
+    unloadEngine(engineID) {
         if (this.engines["engine"+engineID] == null) return;
         this.engines["engine"+engineID].remove();
         delete this.engines["engine"+engineID];
@@ -306,10 +306,12 @@ class GUI {
             this.engines[key].getElementsByClassName("engine-player2")[0]
                 .classList.remove("active");
         }
-        this.engines["engine"+state.player1ID].getElementsByClassName("engine-player1")[0]
-            .classList.add("active");
-        this.engines["engine"+state.player2ID].getElementsByClassName("engine-player2")[0]
-            .classList.add("active");
+        if (state.player1ID != -1)
+            this.engines["engine"+state.player1ID].getElementsByClassName("engine-player1")[0]
+                .classList.add("active");
+        if (state.player2ID != -1) 
+            this.engines["engine"+state.player2ID].getElementsByClassName("engine-player2")[0]
+                .classList.add("active");
     }
 
     updateButtons() {
@@ -323,7 +325,7 @@ class GUI {
         // For now just keeping it disabled
         this.setupBoardButton.classList.add("disabled");
         // Start Button and Previous Button
-        if (state.running || state.historyIndex == 0) {
+        if (state.playing || state.historyIndex == 0) {
             this.startButton.classList.add("disabled");
             this.previousButton.classList.add("disabled");
         } else {
@@ -342,7 +344,7 @@ class GUI {
             this.playPauseButton.getElementsByTagName("a")[0].innerHTML = "Play";
         }
         // Next Button and End Button
-        if (state.running || state.historyIndex >= state.history.length-1) {
+        if (state.playing || state.historyIndex >= state.history.length-1) {
             this.nextButton.classList.add("disabled");
             this.endButton.classList.add("disabled");
         } else {
@@ -418,7 +420,7 @@ class Engine {
 }
 
 function command(msg) {
-    args = msg.split(" ");
+    let args = msg.split(" ");
     switch (args.shift()) {
     case "enginepaths":
         showPaths(args);
@@ -597,11 +599,11 @@ function requestNewGame() {
 }
 
 function requestPause() {
-    if (state.running) socket.send("pause");
+    if (state.playing) socket.send("pause");
 }
 
 function requestPlay() {
-    if (!state.running) socket.send("play");
+    if (!state.playing) socket.send("play");
 }
 
 function requestEngineOperation(engineId, button) {
@@ -647,8 +649,7 @@ window.onload = () => {
         state = new State();
         gui.updateButtons();
         //gui.drawloop();
-
-        // socket.send("init");
+        socket.send("init");
     }
     
     socket.onclose = (evt) => {
