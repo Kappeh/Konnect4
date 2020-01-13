@@ -59,7 +59,7 @@ type GameEvent interface {
 	GameEvent()
 }
 
-// NewStateEvent it triggered when a new position is reached
+// NewStateEvent is triggered when a new position is reached
 type NewStateEvent struct {
 	State State
 }
@@ -74,6 +74,14 @@ type GameOverEvent struct {
 
 // GameEvent allows GameOverEvent to impliment the GameEvent interface
 func (GameOverEvent) GameEvent() {}
+
+// ErrorEvent is triggered when an error occurs when playing game
+type ErrorEvent struct {
+	Error error
+}
+
+// GameEvent allows ErrorEvent to impliment the GameEvent interface
+func (ErrorEvent) GameEvent() {}
 
 // NewGame returns a new game with the default timeout options
 // and a new starting position
@@ -186,20 +194,8 @@ func (g *Game) Play() error {
 	}
 	// Set the running state of the game
 	g.Running = true
-	// Loop until the game is finished or the running state changes
-	for g.State.Winner == Empty && g.Running {
-		// Play out a turn and return errors if they arise
-		err := g.playTurn()
-		if err != nil {
-			return errors.Wrap(err, "unable to play turn")
-		}
-		if g.Events != nil {
-			g.Events <- NewStateEvent{State: g.State}
-		}
-	}
-	if g.Events != nil {
-		g.Events <- GameOverEvent{Winner: g.State.Winner}
-	}
+	// Start gameloop
+	go g.gameLoop()
 	// Game has finished being played, return successfully
 	return nil
 }
@@ -236,6 +232,30 @@ func (g *Game) currentPlayer() (*Engine, error) {
 		return nil, errors.New("current player is nil")
 	}
 	return player, nil
+}
+
+func (g *Game) gameLoop() {
+	// Loop until the game is finished or the running state changes
+	for g.State.Winner == Empty && g.Running {
+		// Play out a turn and return errors if they arise
+		err := g.playTurn()
+		if err != nil && g.Events != nil {
+			g.Events <- ErrorEvent{
+				Error: errors.Wrap(err, "couldn't play turn"),
+			}
+		}
+		if err != nil {
+			g.Running = false
+			return
+		}
+		if g.Events != nil {
+			g.Events <- NewStateEvent{State: g.State}
+		}
+	}
+	if g.Events != nil {
+		g.Events <- GameOverEvent{Winner: g.State.Winner}
+	}
+	g.Running = false
 }
 
 // playTurn plays out the next turn of the game
