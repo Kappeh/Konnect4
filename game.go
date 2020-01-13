@@ -100,10 +100,6 @@ func (g *Game) SetPlayer1(e *Engine) error {
 	if g.Running {
 		return errors.New("cannot set player while game is being played")
 	}
-	// Return an error if the engine provided is nil
-	if e == nil {
-		return errors.New("player1 cannot be nil")
-	}
 	// Set the player
 	g.Player1 = e
 	if e == g.Player2 {
@@ -122,10 +118,6 @@ func (g *Game) SetPlayer2(e *Engine) error {
 	// Return an error if the game is currently running
 	if g.Running {
 		return errors.New("cannot set player while game is being played")
-	}
-	// Return an error if the engine provided is nil
-	if e == nil {
-		return errors.New("player2 cannot be nil")
 	}
 	// Set the player
 	g.Player2 = e
