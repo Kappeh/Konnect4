@@ -424,6 +424,10 @@ function command(msg) {
     switch (args.shift()) {
     case "enginepaths":
         showPaths(args);
+        break;
+    case "noenginepaths":
+        gui.hideOverLay();
+        break;
     case "engines":
         switch (args.shift()) {
         case "load":
