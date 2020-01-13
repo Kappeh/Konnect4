@@ -52,28 +52,34 @@ func NewEngine(path string, protocol func(*exec.Cmd) (Protocol, error)) (*Engine
 		cmd:     exec.Command(path),
 		Options: make(map[string]Option),
 	}
-	var err error
 	// Establishing connection to engine
+	var err error
 	engine.communicator, err = protocol(engine.cmd)
 	if err != nil {
 		return nil, errors.Wrap(err, "couldn't create communicator")
 	}
+	return &engine, nil
+}
+
+// Load starts the engine process and performs a handshake
+// using the protocol implimentation of the communicator
+func (e *Engine) Load() error {
 	// Starting engine
-	if err := engine.cmd.Start(); err != nil {
-		return nil, errors.Wrap(err, "couldn't start engine")
+	if err := e.cmd.Start(); err != nil {
+		return errors.Wrap(err, "couldn't start engine")
 	}
 	// Performing protocol handshake
-	err = engine.communicator.Handshake(
-		&engine.Name,
-		&engine.Author,
-		&engine.Options,
+	err := e.communicator.Handshake(
+		&e.Name,
+		&e.Author,
+		&e.Options,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "protocol handshake failed")
+		return errors.Wrap(err, "protocol handshake failed")
 	}
 	// Engine started successfully
-	engine.ready = true
-	return &engine, nil
+	e.ready = true
+	return nil
 }
 
 // Debug enables and disables the engine's debug mode
