@@ -7,6 +7,16 @@ let state;                  // The current state of the GUI
 // GUI object
 let gui;
 
+// Constants for graphics
+const BORDER_STYLE  = "#ffffff";
+const BORDER_WIDTH  = 1;
+const X_LENGTH      = 20;
+const X_WIDTH       = 5;
+const X_COLOUR      = "#ff0000";
+const O_RADIUS      = 20;
+const O_WIDTH       = 5;
+const O_COLOUR      = "#0000ff";
+
 // Constants for state
 const EMPTY     = 0;
 const PLAYER_1  = 1;
@@ -177,8 +187,8 @@ class GUI {
         this.communicationTerminal  = document.getElementById("communications-terminal").getElementsByTagName("p")[0];
 
         // Getting canvas drawing context
-        this.canvas.width   = 800;
-        this.canvas.height  = 500;
+        this.canvas.width   = 700;
+        this.canvas.height  = 600;
         this.ctx            = this.canvas.getContext("2d");
 
         // Speaks for itself
@@ -350,13 +360,60 @@ class GUI {
         }
     }
 
-    drawloop() {
-        this.draw();
-        requestAnimationFrame(this.drawloop);
+    draw() {
+        // Clearing canvas
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // Drawing borders of board
+        this.ctx.strokeStyle    = BORDER_STYLE;
+        this.ctx.lineWidth      = BORDER_WIDTH;
+        for (let i = 1; i < 7; i++) {
+            let xpos = i * this.canvas.width / 7;
+            this.ctx.beginPath();
+            this.ctx.moveTo(xpos, 0);
+            this.ctx.lineTo(xpos, this.canvas.height);
+            this.ctx.stroke();
+        }
+        for (let i = 1; i < 6; i++) {
+            let ypos = i * this.canvas.height / 6;
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, ypos);
+            this.ctx.lineTo(this.canvas.width, ypos);
+            this.ctx.stroke();
+        }
+        // Drawing peices
+        if (state.history.length == 0) return;
+        for (let i = 0; i < 42; i++) {
+            let tile = state.history[state.historyIndex].tiles[i];
+            if (tile == EMPTY)
+                continue;
+            let x = i % 7;
+            let y = (i - x) / 7;
+            let xcenter = (x + 0.5) * this.canvas.width / 7;
+            let ycenter = (y + 0.5) * this.canvas.height / 6;
+            if (tile == PLAYER_1)
+                this.drawX(xcenter, ycenter);
+            else
+                this.drawO(xcenter, ycenter);
+        }
     }
 
-    draw() {
-        // Draw something to this.canvas with this.ctx
+    drawX(xcenter, ycenter) {
+        this.ctx.strokeStyle    = X_COLOUR;
+        this.ctx.lineWidth      = X_WIDTH;
+        this.ctx.beginPath();
+        this.ctx.moveTo(xcenter - X_LENGTH, ycenter - X_LENGTH);
+        this.ctx.lineTo(xcenter + X_LENGTH, ycenter + X_LENGTH);
+        this.ctx.moveTo(xcenter - X_LENGTH, ycenter + X_LENGTH);
+        this.ctx.lineTo(xcenter + X_LENGTH, ycenter - X_LENGTH);
+        this.ctx.stroke();
+    }
+
+    drawO(xcenter, ycenter) {
+        this.ctx.strokeStyle    = O_COLOUR;
+        this.ctx.lineWidth      = O_WIDTH;
+        this.ctx.beginPath();
+        this.ctx.arc(xcenter, ycenter, O_RADIUS, 0, Math.PI * 2);
+        this.ctx.stroke();
     }
 
     output(time, sender, message) {
@@ -651,7 +708,7 @@ window.onload = () => {
         console.log("Successfully Connected");
         state = new State();
         gui.updateButtons();
-        //gui.drawloop();
+        drawloop();
         socket.send("init");
     }
     
@@ -666,4 +723,9 @@ window.onload = () => {
     socket.onmessage = (msg) => {
         command(msg.data);
     }
+}
+
+function drawloop() {
+    gui.draw();
+    requestAnimationFrame(drawloop);
 }
