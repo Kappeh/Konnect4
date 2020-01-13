@@ -72,13 +72,11 @@ class State {
     }
 
     updatePosition(position) {
-        if (this.historyIndex == this.history.length - 1) {
-            this.historyIndex++;
-        }
         this.history.push(position);
+        this.historyIndex = this.history.length - 1;
     }
 
-    gameOver(winner) {
+    setGameOver(winner) {
         this.playing    = false;
         this.gameOver   = true;
         this.winner     = winner;
@@ -100,51 +98,50 @@ function buttonClick() {
     case LOAD_ENGINE_BUTTON:
         gui.showOverlay();
         requestEnginePaths();
-        return;
+        break;
     case NEW_GAME_BUTTON:
         requestNewGame();
-        return;
+        break;
     case SETUP_BOARD_BUTTON:
         // Not Implimented
-        return;
+        break;
     case START_BUTTON:
         state.historyIndex = 0;
-        gui.updateButtons();
-        return;
+        break;
     case PREVIOUS_BUTTON:
         if (state.historyIndex > 0) {
             state.historyIndex--;
-            gui.updateButtons();
         }
-        return;
+        break;
     case PLAY_PAUSE_BUTTON:
         if (state.playing) {
             requestPause();
         } else {
             requestPlay();
         }
-        return;
+        break;
     case NEXT_BUTTON:
         if (state.historyIndex < state.history.length-1) {
             state.historyIndex++;
-            gui.updateButtons();
         }
-        return;
+        break;
     case END_BUTTON:
         if (state.historyIndex < state.history.length-1) {
             state.historyIndex = state.history.length-1;
-            gui.updateButtons();
         }
-        return;
+        break;
     case GO_BACK_BUTTON:
         gui.hideOverLay();
-        return;
+        break;
     }
-    // If we reach this point, it's en engine specific button
-    let tmp         = this.buttonId - ENGINE_BUTTONS_START;
-    let button      = tmp % ENGINE_BUTTONS_STRIDE;
-    let engineId    = Math.floor(tmp / ENGINE_BUTTONS_STRIDE);
-    requestEngineOperation(engineId, button);
+    if (this.buttonId >= ENGINE_BUTTONS_START) {
+        // If we reach this point, it's en engine specific button
+        let tmp         = this.buttonId - ENGINE_BUTTONS_START;
+        let button      = tmp % ENGINE_BUTTONS_STRIDE;
+        let engineId    = Math.floor(tmp / ENGINE_BUTTONS_STRIDE);
+        requestEngineOperation(engineId, button);
+    }
+    gui.updateButtons();
 }   
 
 // Controls all of the visuals of the GUI
@@ -366,12 +363,17 @@ class GUI {
         if (this.outputTerminal.innerHTML != "")
             this.outputTerminal.innerHTML += "<br>";
         this.outputTerminal.innerHTML += "["+time+"]["+sender+"]: " + message;
+        this.outputTerminal.scrollTo(0, this.outputTerminal.scrollHeight);
     }
 
-    communication(time, sender, receiver, message) {
+    communication(time, engine, toengine, message) {
+        let prefix = "<--" + engine;
+        if (toengine) prefix = "-->" + engine;
+        
         if (this.communicationTerminal.innerHTML != "")
             this.communicationTerminal.innerHTML += "<br>";
-        this.communicationTerminal.innerHTML += "["+time+"]["+sender+" -> "+receiver+"]: " + message;
+        this.communicationTerminal.innerHTML += "["+time+"]["+prefix+"]: " + message;
+        this.communicationTerminal.scrollTo(0, this.communicationTerminal.scrollHeight);
     }
 }
 
@@ -476,6 +478,7 @@ function command(msg) {
         communication(args);
         break;
     }
+    gui.updateButtons();
 }
 
 function showPaths(args) {
@@ -541,18 +544,15 @@ function players(args) {
 
 function newGame() {
     state.newGame();
-    gui.updateButtons();
 }
 
 function position(args) {
     let position = new Position(args[args.length - 1]);
     state.updatePosition(position);
-    gui.updateButtons();
 }
 
 function gameOver(args) {
-    state.gameOver(parseInt(args[args.length-1]));
-    gui.updateButtons();
+    state.setGameOver(parseInt(args[args.length-1]));
 }
 
 function history(args) {
@@ -564,12 +564,10 @@ function history(args) {
 
 function play() {
     state.play();
-    gui.updateButtons();
 }
 
 function pause() {
     state.pause();
-    gui.updateButtons();
 }
 
 function output(args) {
@@ -586,16 +584,17 @@ function output(args) {
 
 function communication(args) {
     let timeIndex       = args.indexOf("time");
-    let senderIndex     = args.indexOf("sender");
-    let receiverIndex   = args.indexOf("receiver");
+    let engineIndex     = args.indexOf("engine");
+    let toengineIndex   = args.indexOf("toengine");
     let messageIndex    = args.indexOf("message");
 
-    let time        = args.slice(timeIndex+1, senderIndex).join(" ");
-    let sender      = args.slice(senderIndex+1, receiverIndex).join(" ");
-    let receiver    = args.slice(receiverIndex+1, messageIndex).join(" ");
+    let time        = args.slice(timeIndex+1, engineIndex).join(" ");
+    let engine      = args.slice(engineIndex+1, toengineIndex).join(" ");
+    let toengine    = args.slice(toengineIndex+1, messageIndex).join(" ");
     let message     = args.slice(messageIndex+1, args.length).join(" ");
 
-    gui.communication(time, sender, receiver, message);
+    toengine = toengine.toLowerCase() == "true";
+    gui.communication(time, engine, toengine, message);
 }
 
 function requestNewGame() {
