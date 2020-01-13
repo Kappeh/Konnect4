@@ -1,3 +1,5 @@
+"use strict"
+
 // Protocol objects
 let socket;                 // The websocket connection to the GUI
 let state;                  // The current state of the GUI
@@ -587,7 +589,7 @@ function communication(args) {
     let receiver    = args.slice(receiverIndex+1, messageIndex).join(" ");
     let message     = args.slice(messageIndex+1, args.length).join(" ");
 
-    gui.communication(time, sender, reveiver, message);
+    gui.communication(time, sender, receiver, message);
 }
 
 function requestNewGame() {
