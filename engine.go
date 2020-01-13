@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"github.com/pkg/errors"
@@ -39,7 +40,7 @@ type Engine struct {
 // or the protocol handshake failed, an error will be returned
 func NewEngine(path string, protocol func(*exec.Cmd) (Protocol, error)) (*Engine, error) {
 	// Checking if the engine file exists
-	path = "engines/" + path
+	path = filepath.Join(EngineDirectory, path)
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil, errors.Wrap(err, "couldn't find engine")
 	} else if err != nil {
