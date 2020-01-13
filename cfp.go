@@ -423,17 +423,6 @@ func (c *CFPProtocol) receivedInfoCommand(args []string) {
 	c.info <- strings.Join(args, " ")
 }
 
-// sliceIndex finds the indx of the first element of a slice that
-// holds to a predicate function
-func sliceIndex(limit int, predicate func(int) bool) int {
-	for i := 0; i < limit; i++ {
-		if predicate(i) {
-			return i
-		}
-	}
-	return -1
-}
-
 // receivedOptionCommand is called whenever the engine
 // has specified an internal parameter that can be changed
 // The command arguments are used to determine which option type
@@ -442,7 +431,7 @@ func sliceIndex(limit int, predicate func(int) bool) int {
 // cannot be parsed, it is ignored.
 func (c *CFPProtocol) receivedOptionCommand(args []string) {
 	// Getting index of type identifier
-	typeIndex := sliceIndex(len(args), func(i int) bool {
+	typeIndex := SliceIndex(len(args), func(i int) bool {
 		return strings.ToLower(args[i]) == "type"
 	})
 	if typeIndex == -1 {
