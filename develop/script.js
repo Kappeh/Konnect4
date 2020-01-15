@@ -93,6 +93,7 @@ class State {
     }
 
     play() {
+        this.historyIndex = this.history.length - 1;
         this.playing = true;
     }
 
