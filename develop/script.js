@@ -359,6 +359,12 @@ class GUI {
             this.nextButton.classList.remove("disabled");
             this.endButton.classList.remove("disabled");
         }
+        // Engine List
+        if (state.playing) {
+            this.engineList.classList.add("disabled");
+        } else {
+            this.engineList.classList.remove("disabled");
+        }
     }
 
     draw() {
