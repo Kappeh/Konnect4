@@ -230,7 +230,7 @@ func (g *Game) gameLoop() {
 	// Loop until the game is finished or the running state changes
 	for g.State.Winner == Empty && g.Running {
 		// Play out a turn and return errors if they arise
-		err := g.playTurn()
+		completed, err := g.playTurn()
 		if err != nil && g.Events != nil {
 			g.Events <- ErrorEvent{
 				Error: errors.Wrap(err, "couldn't play turn"),
@@ -240,7 +240,7 @@ func (g *Game) gameLoop() {
 			g.Running = false
 			return
 		}
-		if g.Events != nil {
+		if g.Events != nil && completed {
 			g.Events <- NewStateEvent{State: g.State}
 		}
 	}
@@ -251,25 +251,27 @@ func (g *Game) gameLoop() {
 }
 
 // playTurn plays out the next turn of the game
-func (g *Game) playTurn() error {
+// a boolean value is returned which indicates whether
+// the turn was NOT interupted by a pause signal or an error
+func (g *Game) playTurn() (bool, error) {
 	// Return an error if the game is over
 	if g.State.Winner != Empty {
-		return errors.New("unable to play turn when game is over")
+		return false, errors.New("unable to play turn when game is over")
 	}
 	// Update the engines' internal states
 	err := g.updateEngineStates()
 	if err != nil {
-		return errors.Wrap(err, "couldn't update engine states")
+		return false, errors.Wrap(err, "couldn't update engine states")
 	}
 	// Get the player that is to make the next move
 	player, err := g.currentPlayer()
 	if err != nil {
-		return errors.Wrap(err, "couldn't get current player")
+		return false, errors.Wrap(err, "couldn't get current player")
 	}
 	// Get the player to analyse the current position
 	err = player.Go(g.TurnTime)
 	if err != nil {
-		return errors.Wrap(err, "failed to start player analysis")
+		return false, errors.Wrap(err, "failed to start player analysis")
 	}
 	// Wait for a pause signal or the timeout to pass
 	select {
@@ -278,24 +280,26 @@ func (g *Game) playTurn() error {
 		// If a pause signal is sent, stop the play from thinking
 		_, err := player.Stop()
 		if err != nil {
-			return errors.Wrap(err, "unable to send stop signal to player")
+			return false, errors.Wrap(err, "unable to send stop signal to player")
 		}
-		return nil
+		// Good return, turn was interupted by pause
+		return false, nil
 	}
 	// Get the player from the player
 	move, err := player.Stop()
 	if err != nil {
-		return errors.Wrap(err, "unable to get move from player")
+		return false, errors.Wrap(err, "unable to get move from player")
 	}
 	// Apply the move to the current state
 	g.State, err = g.State.NextState(move)
 	if err != nil {
-		return errors.Wrap(err, "unable to apply move")
+		return false, errors.Wrap(err, "unable to apply move")
 	}
 	// Update the history of the game
 	g.HistoryIndex++
 	g.History[g.HistoryIndex] = g.State
-	return nil
+	// Good return, turn wasn't interupted
+	return true, nil
 }
 
 // updateEngineStatuses sends relevent information to the players
