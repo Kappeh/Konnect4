@@ -206,6 +206,12 @@ func (d *Develop) initRequest(evt ClientEvent) {
 	for i := 0; i <= d.game.HistoryIndex; i++ {
 		d.server.Respond(evt, "position "+d.game.History[i].CFPString())
 	}
+	if d.game.Running {
+		d.server.Respond(evt, "play")
+	}
+	if d.game.State.Winner != Empty {
+		d.server.Respond(evt, fmt.Sprintf("gameover winner %d", d.game.State.Winner))
+	}
 	// Send output command
 	d.server.Respond(evt, fmt.Sprintf(
 		"output time %s sender %s message %s",
