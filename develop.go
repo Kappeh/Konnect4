@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -183,6 +184,10 @@ func (d *Develop) listenToClients() {
 			d.enginePathsRequest(evt)
 		case "engine":
 			d.engineEventRequest(evt, args[1:])
+		case "options":
+			d.optionsRequest(evt, args[1:])
+		case "setoption":
+			d.setOptionRequest(evt, args[1:])
 		}
 	}
 }
@@ -396,6 +401,137 @@ func (d *Develop) engineUnloadRequest(evt ClientEvent, args []string) {
 	}
 }
 
+// optionsRequest responds to an engineoptions command sent from a client
+// it gives the client commands which describe the options avaliable for an engine
+func (d *Develop) optionsRequest(evt ClientEvent, args []string) {
+	// Get the engine id
+	engineIDString := args[len(args)-1]
+	engineID, err := strconv.Atoi(engineIDString)
+	if err != nil {
+		d.respondError(evt, errors.Wrap(err, "couldn't aquire engine id"))
+		return
+	}
+	// Respond if there are no options
+	if len(d.engines[engineID].Options) == 0 {
+		d.server.Respond(evt, "nooptions")
+		return
+	}
+	// Get an ordered list of the options for the engine
+	options := d.engines[engineID].Options
+	ordered := make([]Option, 0, len(options))
+	for _, option := range options {
+		ordered = append(ordered, option)
+	}
+	sort.Slice(ordered, func(i, j int) bool {
+		return ordered[i].OptionName() < ordered[j].OptionName()
+	})
+	// For each option
+	for _, option := range ordered {
+		// Get the option string for the option
+		optionString, err := d.optionString(option)
+		if err != nil {
+			continue
+		}
+		// Send the option to the client
+		d.server.Respond(evt, fmt.Sprintf(
+			"option engineid %d name %s %s",
+			engineID, option.OptionName(), optionString,
+		))
+	}
+}
+
+// optionString returns a string which fully describes an Option
+func (d *Develop) optionString(o Option) (string, error) {
+	switch v := o.(type) {
+	case CheckBox:
+		return fmt.Sprintf(
+			"type check value %t",
+			v.Value,
+		), nil
+	case Spinner:
+		return fmt.Sprintf(
+			"type spin min %d max %d value %d",
+			v.Min, v.Max, v.Value,
+		), nil
+	case ComboBox:
+		vars := make([]string, 0, len(v.Vars))
+		for k := range v.Vars {
+			vars = append(vars, k)
+		}
+		return fmt.Sprintf(
+			"type combo value %s var %s",
+			v.Value, strings.Join(vars, " var "),
+		), nil
+	case Button:
+		return "type button", nil
+	case String:
+		return fmt.Sprintf(
+			"type string value %s",
+			v.Value,
+		), nil
+	default:
+		return "", errors.New("option type not supported")
+	}
+}
+
+// setOptionRequest handles a setoption command from a client
+// the engineid, option name and the value are parsed and send
+// sent to the engine
+func (d *Develop) setOptionRequest(evt ClientEvent, args []string) {
+	// Get the index of "engineid" in args
+	engineIDIndex := SliceIndex(len(args), func(i int) bool {
+		return args[i] == "engineid"
+	})
+	// Get the index of "name" in args
+	nameIndex := SliceIndex(len(args), func(i int) bool {
+		return args[i] == "name"
+	})
+	// Get the index of "value" in args
+	valueIndex := SliceIndex(len(args), func(i int) bool {
+		return args[i] == "value"
+	})
+	// Get the value
+	var value string
+	if valueIndex == -1 {
+		// If valueIndex is -1 (no "value" in args),
+		// valueIndex is set to the length of args
+		// as to not cause an error when aquiring name
+		valueIndex = len(args)
+	} else {
+		value = strings.Join(args[valueIndex+1:len(args)], " ")
+	}
+	// Get the engine id
+	engineIDString := strings.Join(args[engineIDIndex+1:nameIndex], " ")
+	engineID, err := strconv.Atoi(engineIDString)
+	if err != nil {
+		d.respondError(evt, errors.Wrap(err, "invalid engineid"))
+		return
+	}
+	// Get the name
+	name := strings.Join(args[nameIndex+1:valueIndex], " ")
+	engine, ok := d.engines[engineID]
+	if !ok {
+		d.respondError(evt, errors.New("no engine with that id"))
+		return
+	}
+	// Get the Option struct
+	option, ok := engine.Options[name]
+	if !ok {
+		d.respondError(evt, errors.New("no option with that name"))
+		return
+	}
+	// Set the option
+	value, err = d.setOption(engine, option, value)
+	if err != nil {
+		d.respondError(evt, errors.Wrap(err, "couldn't set option"))
+	} else if _, ok := option.(Button); !ok {
+		d.server.TriggerEvent(ServerEvent{WSCommand: fmt.Sprintf(
+			"updateoption engineid %d name %s value %s",
+			engineID, name, value,
+		)})
+	}
+}
+
 // newGame starts a new game
 func (d *Develop) newGame() error {
 	// Try to reset the game
@@ -572,6 +708,73 @@ func (d *Develop) unloadEngine(id int) error {
 		FormatTime(time.Now()), "INFO", "Engine has been disconnected",
 	)})
 	return nil
+}
+
+// setOption converts value to the correct format for option's type and
+// sends the updated information to the engine for it to update
+// it's settings internally
+func (d *Develop) setOption(engine *Engine, option Option, value string) (string, error) {
+	// Convert the value into an Option of the same type as option
+	var (
+		newOption Option
+		outValue  string
+	)
+	switch v := option.(type) {
+	case CheckBox:
+		newOption = CheckBox{
+			Name:  v.Name,
+			Value: value == "true",
+		}
+		outValue = value
+	case Spinner:
+		number, err := strconv.Atoi(value)
+		if err != nil {
+			return "", errors.Wrap(err, "value is not a number")
+		}
+		if number < v.Min {
+			number = v.Min
+		}
+		if number > v.Max {
+			number = v.Max
+		}
+		newOption = Spinner{
+			Name:  v.Name,
+			Min:   v.Min,
+			Max:   v.Max,
+			Value: number,
+		}
+		outValue = strconv.Itoa(number)
+	case ComboBox:
+		for k := range v.Vars {
+			if value == k {
+				goto PASS_CHECK
+			}
+		}
+		return "", errors.New("value not in option vars")
+	PASS_CHECK:
+		newOption = ComboBox{
+			Name:  v.Name,
+			Vars:  v.Vars,
+			Value: value,
+		}
+		outValue = value
+	case Button:
+		newOption = v
+	case String:
+		newOption = String{
+			Name:  v.Name,
+			Value: value,
+		}
+		outValue = value
+	default:
+		return "", errors.New("unsupported option type")
+	}
+	// Send the new updated Option to the engine
+	err := engine.SetOption(newOption)
+	if err != nil {
+		return "", errors.Wrap(err, "couldn't set engine option")
+	}
+	return outValue, nil
 }
 
 // respondError responds to a client event with an error

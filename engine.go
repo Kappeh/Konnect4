@@ -98,6 +98,7 @@ func (e *Engine) SetOption(o Option) error {
 	if _, ok := e.Options[o.OptionName()]; !ok {
 		return errors.New("option not specified by engine")
 	}
+	e.Options[o.OptionName()] = o
 	return e.communicator.SetOption(o)
 }
 
