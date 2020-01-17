@@ -4,13 +4,9 @@ Description:
     The GUI will be the program that runs the engines. Communication will
     be done through text commands using stdin/stdout.
     
-    The engine should boot and wait for input from the GUI, the engine
-    should wait for the `isready` or `setoption` command to set up its internal
-    parameters as the boot process should be as quick as possible.
-
-    The engine must always be able to process input from stdin, even while thinking. 
-
     Each command should end with a newline character (`\n`).
+
+    The engine must always be able to process input from stdin, even while thinking.
 
     The engine should not start calculating until it is given a `go` command.
     The engine should stop thinking as soon as possible when given a `stop`
@@ -23,7 +19,7 @@ Description:
     If the engine or GUI receives an unknown command or token, it should just ignore
     it and try to parse the rest of the string.
 
-    If the engine reveives a command which is not supposed to come, for example a
+    If the engine receives a command which is not supposed to come, for example a
     `stop` command when the engine isn't calculating, it should just ignore it.
 
 Representations:
@@ -54,11 +50,10 @@ Representations:
         The starting position (An empty board, player 1 to play) will thus be:
         "0000000000000000000000000000000000000000001"
 
-    (2) MoveLists
-        A move list will simply be a string where each character represents a column.
-        The characters '0' to '6' will be used to represent each column from left to right.
-
-        E.g. "35610" means place in the fourth column, then the sixth, then the seventh, etc.
+    (2) Moves
+        A move will be represented by a single character '0' to '6' which
+        correspond to the index of the column a tile should be dropped in
+        with the far left being '0' and the far right being '6'.
 
 GUI to Engine
 
@@ -87,7 +82,7 @@ GUI to Engine
         This command must always be answered with `readyok` and can be sent also when the engine is calculating
         in which case the engine should also immediately answer with `readyok` without stopping the search.
 
-    * setoption name [ value ]
+    * setoption name <name> value <value>
         This is sent to the engine when the user wants to change the internal parameters of the engine.
         One string will be sent for each parameter and this will only be sent when the engine is waiting.
         The name of the option in should not be case sensitive and can include spaces. The same applies for the value.
@@ -103,21 +98,23 @@ GUI to Engine
         As the engine's reaction to `cfpnewgame` can take some time, the GUI should always send `isready`
         after `cfpnewgame` to wait for the engine to finish it's operation.
     
-    * position [ pos | startpos ] moves ...
-        Set up the position described in the `pos`(1) string on the internal board and
-        play the moves(2) on the internal Connect Four board. If the game was played from the start position (blank board),
-        the string `startpos` will be sent.
-        Note: no `new` command is needed. However, if this position is from a different game than the last
-        position sent to the engine, the GUI should have sent a `cfpnewgame` inbetween.
+    * position [ <position> | startpos ]
+        Set up the position described in the `pos`(1) string on the internal board or
+        "startpos" will be sent as an alias for the starting position. (Blank board and
+        player1's turn). Note: no `new` command is needed. However, if this position is
+        from a different game than the last position sent to the engine, the GUI should
+        have sent a `cfpnewgame` inbetween.
 
-    * go
+    * go [movetime <movetime>]
         Start calculating on the current position set up with the `position` command.
         Before a GUI asks for the move your engine suggests, a `stop` command will be sent.
         You can keep calculating until then.
+        Optionally, a move time will be sent which is the maximum amount of time the engine
+        should expect to analyse the current position in seconds.
     
     * stop
         Stop calculating as soon as possible.
-        Stop must be answered with the `bestmove` command.
+        Stop must be responded to with the `bestmove` command.
     
     * quit
         Quit the program as soon as possible.
@@ -125,11 +122,11 @@ GUI to Engine
 Engine to GUI
 
     * id
-        * name
+        * name <name>
             This must be sent after recieving the `cfp` command to identify the engine.
             E.g. `id name Connect4Engine 1.1`
 
-        * author
+        * author <author>
             This must be sent after recieving the `cfp` command to identify the engine.
             E.g. `id author Kieran Powell`
     
@@ -143,15 +140,15 @@ Engine to GUI
         It is usually sent after a command that can take some time to be able to wait for the engine,
         but it can be used anytime, even when the engine is thinking.
     
-    * bestmove
+    * bestmove <move>
         The engine has stopped searching and found the move best in the position.
         This must be sent directly after recieving a `stop` command.
-
-        Best move must be followed by the index of the column of the best move.
+        Best move must be followed by the index of the column of the best move
+        as explained in `moves`(2).
         For example, if the best move is to drop a tile in the middle column,
-        the engine should send `bestmove 3`.
+        the engine should send `bestmove 3` after recieving a `stop` command.
         
-    * info
+    * info <message>
         The engine wants to send information to the GUI. This will be printed in the gui output terminal.
         Examples include:
             `info Forced win found in 5 moves`
@@ -170,10 +167,10 @@ Engine to GUI
         For all allowed combinations see the example below, as some combinations of this tokens don't make sense.
         One string will be sent for each parameter.
 
-        * name
+        * name <name>
             The option has the name id.
         
-        * type
+        * type <type>
             The optiona has a type t.
 
             * check
@@ -191,16 +188,16 @@ Engine to GUI
             * string
                 A text field that has a string as a value. An empty string has the value "".
 
-        * default
+        * default <default>
             The default value of the parameter is x
 
-        * min
+        * min <min>
             The minumum value of the parameter. (Only for type spin)
 
-        * max
+        * max <max>
             The maximum value of the parameter. (Only for type spin)
 
-        * var
+        * var <var>
             A predefined value of the parameter. (Only used for combo)
 
         Examples:
@@ -218,50 +215,50 @@ Example Transactions:
     (1) When the GUI starts up the engine, this is how the communication can look
 
         // GUI tells the engine to use CFP mode
-        GUI -> Engine:  "cfp\n"
+        -->Engine:  "cfp\n"
         
         // Engine identifies itself
-        Engine -> GUI:  "id name MyEngine 1.1\n"
-                        "id author Kieran Powell\n"
+        <--Engine:  "id name MyEngine 1.1\n"
+                    "id author Kieran Powell\n"
         
         // Engine sends options it can change
-        Engine -> GUI:  "option name Clear type button\n"
-                        "option name Search Depth type spin default -1 min -1 max 100\n"
+        <--Engine:  "option name Clear type button\n"
+                    "option name Search Depth type spin default -1 min -1 max 100\n"
         
         // Engine has sent all parameters and is ready
-        Engine -> GUI:  "cfpok\n"
+        <--Engine:  "cfpok\n"
 
         // Note that here the GUI can already send a `quit` command if it wants to find out
         // details about the engine, so the engine shouldn't initialize its internal parameters before here.
 
         // Let's pretend the user changes the search depth and turns on debug mode
-        GUI -> Engine:  "setoption name Search Depth value 20\n"
-        GUI -> Engine:  "debug on\n"
+        -->Engine:  "setoption name Search Depth value 20\n"
+        -->Engine:  "debug on\n"
 
         // The GUI wants to wait for the engine to finish initializing
-        GUI -> Engine:  "isready\n"
+        -->Engine:  "isready\n"
 
         // The Engine finishes setting up and is ready for more commands
-        Engine -> GUI:  "readyok\n"
+        <--Engine:  "readyok\n"
 
     (2) The engine is ready for more commands and the GUI wants to start a new game
         and for the engine to take the first turn
 
         // The GUI sets up the new game
-        GUI -> Engine:  "cfpnewgame\n"
-        GUI -> Engine:  "position startpos"
+        -->Engine:  "cfpnewgame\n"
+        -->Engine:  "position startpos"
 
         // The GUI waits for the engine to finish setting up the position
-        GUI -> Engine:  "isready\n"
-        Engine -> GUI:  "readyok\n"
+        -->Engine:  "isready\n"
+        <--Engine:  "readyok\n"
 
         // The GUI tells the engine to start thinking
-        GUI -> Engine:  "go\n"
+        -->Engine:  "go\n"
 
         // Let's say the GUI gives the engine some time to think here,
         // and now it want's an answer.
-        GUI -> Engine:  "stop\n"
+        -->Engine:  "stop\n"
 
         // For each `stop` command, the engine must provide a `bestmove` command
         // in response
-        Engine -> GUI:  "bestmove 3\n"
+        <--Engine:  "bestmove 3\n"
