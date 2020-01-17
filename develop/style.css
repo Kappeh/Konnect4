@@ -123,6 +123,7 @@ main {
 
 .engine-player1,
 .engine-player2,
+.engine-settings,
 .engine-disconnect {
     height: 100%;
     width: 13%;
@@ -135,6 +136,7 @@ main {
 
 .engine-player1:hover,
 .engine-player2:hover,
+.engine-settings:hover,
 .engine-disconnect:hover,
 .engine-player1.active,
 .engine-player2.active {
@@ -263,10 +265,10 @@ footer {
 
 /* Load engine overlay */
 #load-engine-overlay {
-    display: flex;
     height: 95%;
     width: 100%;
     background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1;
     position: absolute;
     justify-content: center;
     align-items: center;
@@ -314,6 +316,235 @@ footer {
     background-color: #4e6842;
 }
 
+/* Engine settings overlay */
+#engine-settings-overlay {
+    height: 95%;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    position: absolute;
+    z-index: 1;
+    justify-content: center;
+    align-items: center;
+    display: none;
+}
+
+#engine-settings-list {
+    border: 5px solid #0a0c12;
+    background-color: #0f111a;
+    padding: 2em;
+    display: flex;
+    align-items: center;
+}
+
+#engine-settings {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-right: 0.2em;
+}
+
+.engine-setting {
+    width: 35em;
+    margin: 0.1em;
+    display: flex;
+    flex-direction: row;
+    font-style: italic;
+    justify-content: space-between;
+    background-color: #0a0c12;
+    color: #8f93a2;
+}
+
+.engine-setting-name,
+.engine-setting-control {
+    padding: 1em;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.engine-setting-name {
+    justify-content: left;
+}
+
+.engine-setting-control {
+    justify-content: right;
+}
+
+.engine-setting-name {
+    width: 50%;
+}
+
+.engine-setting-control {
+    width: 50%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.setting-update-button {
+    background-color: #0f111a;
+    color: #4f5158;
+    padding: 0 0.5em;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    height: 2em;
+    margin-left: 0.5em;
+    cursor: default;
+}
+
+.setting-update-button.clickable {
+    background-color: #1a565d;
+    color: #8f93a2;
+    cursor: pointer;
+}
+
+.setting-update-button.clickable:hover {
+    background-color: #32738d;
+    color: #ffffff;
+}
+
+.setting-checkbox {
+    width: 1em;
+    height: 1em;
+    background-color: #393d4e;
+    cursor: pointer;
+}
+
+.setting-checkbox.checked {
+    background-color: #32738d;
+}
+
+.setting-spin {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}
+
+.setting-spin input {
+    -webkit-appearance: none; 
+    -moz-appearance:textfield;
+    height: 2em;
+    border: 0;
+    padding: 0 0.5em;
+    margin: 0;
+    width: 75%;
+    background-color: #0f111a;
+    color: #8f93a2;
+}
+
+.setting-spin .spin-arrows {
+    width: 25%;
+    display: flex;
+    flex-direction: column;
+    height: 2em;
+}
+
+.setting-spin .spin-up,
+.setting-spin .spin-down {
+    width: 100%;
+    height: 50%;
+    background-color: #0f111a;
+    color: #8f93a2;
+    cursor: pointer;
+}
+
+.setting-combo {
+    width: 100%;
+    position: relative;
+    height: 2em;
+}
+
+.setting-combo .option {
+    display: flex;
+    width: 100%;
+    height: 2em;
+}
+
+.setting-combo .option > * {
+    width: 100%;
+}
+
+.setting-combo:hover > .options {
+    display: flex;
+}
+
+.setting-combo .selected {
+    display: flex;
+    flex-direction: row;
+    justify-content: left;
+    align-items: center;
+    background-color: #0f111a;
+    cursor: default;
+}
+
+.setting-combo .options {
+    position: absolute;
+    z-index: 1;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    flex-direction: column;
+    background-color: #0f111a;
+    display: none;
+    cursor: pointer;
+}
+
+.setting-combo .options .option {
+    border-top: 0.1em solid #0a0c12;
+}
+
+.setting-combo p {
+    display: block;
+    padding: 0.4em 0.5em;
+}
+
+.setting-combo .options .option:hover {
+    background-color: rgba(255, 255, 255, 0.1)
+}
+
+.setting-button {
+    width: 100%;
+    height: 2em;
+    background-color: #1a565d;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.setting-button:hover {
+    width: 100%;
+    height: 2em;
+    background-color: #32738d;
+    color: white;
+}
+
+.setting-string {
+    width: 100%;
+    height: 2em;
+    display: flex;
+    position: relative;
+    background-color: #0f111a;
+    padding: 0 0.5em;
+}
+
+.setting-string input {
+    display: block;
+    -webkit-appearance: none; 
+    -moz-appearance:textfield;
+    height: 2em;
+    border: 0;
+    padding: 0;
+    width: 100%;
+    background-color: #0f111a;
+    color: #8f93a2;
+}
+
+/* Common overlay styles */
+
 .go-back-button {
     padding: 0.7em 1em;
     background-color: #772d2d;
@@ -322,6 +553,8 @@ footer {
     color: #8f93a2;
     margin: 0.1em;
     align-self: end;
+    display: block;
+    float: right;
 }
 
 .go-back-button:hover {
@@ -349,3 +582,4 @@ footer {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
