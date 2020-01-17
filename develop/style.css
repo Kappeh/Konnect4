@@ -67,7 +67,7 @@ main {
 }
 
 #engine-list {
-    width: 20%;
+    width: 30%;
     overflow-x: hidden;
     position: relative;
 }
@@ -168,7 +168,7 @@ h3 {
 }
 
 #game-screen {
-    width: 80%;
+    width: 70%;
     display: flex;
     flex-direction: row;
     justify-content: center;
