@@ -1,5 +1,5 @@
 # Konnect4
-Konnect4 is a web based GUI for running and debugging connect 4 engines written in go.
+Konnect4 is a web based GUI written in go for running and debugging connect 4 engines.
 
 
 ## Getting Started
