@@ -6,29 +6,28 @@ Konnect4 is a web based GUI written in go for running and debugging connect 4 en
 
 ### Prerequisites
 
-In order to build and/or run this software, you well need go installed on your computer.
-[Download go](https://golang.org/dl/).
-
-You will also need to aquire some dependency packages using the following commands
+First download this repository and extract it or use git to clone the repository:
 
 ```
-go get github.com/pkg/errors
-go get github.com/gorilla/websocket
+$ git clone https://github.com/Kappeh/Konnect4.git
+$ cd Konnect4
+```
+
+In order to build and/or run this software, you will need go installed on your computer.
+[Download go](https://golang.org/dl/).
+
+You will also need to aquire some dependency packages using the following command
+
+```
+$ go get
 ```
 
 ### Running
 
-First download this repository and extract it or use git to clone the repository:
+In order to run the web server, run the following command
 
 ```
-git clone https://github.com/Kappeh/Konnect4.git
-```
-
-Then run the web server
-
-```
-cd Konnect4
-go run *.go
+$ go run *.go
 ```
 
 Then use your favourite web browser to goto `localhost:8080`
@@ -38,11 +37,11 @@ Then use your favourite web browser to goto `localhost:8080`
 If you are able to run the program successfully, you can build and run it
 
 ```
-go -o Konnect4 build *.go
-./Konnect4
+$ go -o Konnect4 build *.go
+$ ./Konnect4
 ```
 
-Running may vary on Windows / MacOS
+Running may vary on Windows / MacOS and have not been tested
 
 ## Engines
 
